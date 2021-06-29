@@ -1,0 +1,8 @@
+name: Uniporter
+version: 1.0-SNAPSHOT
+main: cn.apisium.uniporter.Uniporter
+api-version: 1.13
+load: STARTUP
+authors: [ Baleine_2000 ]
+description: Unifiy a http standard port and minecraft server port.
+website: apisium.cn

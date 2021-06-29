@@ -1,0 +1,24 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'cn.apisium'
+version = '1.0-SNAPSHOT'
+
+description = """Uniporter"""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+
+repositories {
+    maven { url "https://hub.spigotmc.org/nexus/content/repositories/snapshots/" }
+    maven { url "https://oss.sonatype.org/content/groups/public/" }
+    maven { url "https://repo.maven.apache.org/maven2" }
+    mavenLocal() // This is needed for CraftBukkit and Spigot.
+}
+dependencies {
+    compileOnly 'org.spigotmc:spigot:1.12.2-R0.1-SNAPSHOT'
+}
