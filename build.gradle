@@ -25,4 +25,5 @@ dependencies {
         exclude group: 'org.bukkit'
     }
 
+    annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
 }
