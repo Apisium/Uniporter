@@ -17,17 +17,28 @@ public class Decoder extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext context, ByteBuf buf, List<Object> list) throws Exception {
         buf.retain();
         buf.markReaderIndex();
-        if (buf.isReadable() && !initialized && httpMethods.contains((char) buf.readByte())) {
-            registerProtocol(context);
-            context.channel().pipeline().fireChannelRead(buf);
-        } else {
+        boolean handled = false;
+        if (buf.isReadable() && !initialized) {
+            byte head = buf.readByte();
+            if (head == 22) {
+            } else if (httpMethods.contains((char) head)) {
+                registerHttp(context);
+                handled = true;
+            }
+            if (handled) {
+                buf.resetReaderIndex();
+                context.channel().pipeline().fireChannelRead(buf);
+            }
+        }
+
+        if (!handled) {
             buf.resetReaderIndex();
             context.channel().pipeline().remove(Constants.DECODER_ID);
             context.fireChannelRead(buf);
         }
     }
 
-    private void registerProtocol(ChannelHandlerContext context) {
+    private void registerHttp(ChannelHandlerContext context) {
         try {
             List<String> original = context.channel().pipeline().names();
             List<String> names = new ArrayList<>(original.size());
