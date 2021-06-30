@@ -1,7 +1,6 @@
 package cn.apisium.uniporter.router.api;
 
-import cn.apisium.uniporter.router.api.Route;
-import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.bukkit.configuration.ConfigurationSection;
@@ -17,9 +16,31 @@ import java.util.stream.Collectors;
 
 public class Config {
     ConfigurationSection section;
-    List<String> indexes = new ArrayList<>();
+
+    String sslKeyStorePath;
+    String sslKeyStorePassword;
+
+    List<String> indexes;
     HashMap<String, Route> routes = new HashMap<>();
     HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
+
+    boolean keyStoreExist = false;
+
+    public File getKeyStore() {
+        return new File(Uniporter.getInstance().getDataFolder(), getSslKeyStorePath()).getAbsoluteFile();
+    }
+
+    public boolean isKeyStoreExist() {
+        return keyStoreExist;
+    }
+
+    public String getSslKeyStorePath() {
+        return sslKeyStorePath;
+    }
+
+    public String getSslKeyStorePassword() {
+        return sslKeyStorePassword;
+    }
 
     public ConfigurationSection getSection() {
         return section;
@@ -59,6 +80,12 @@ public class Config {
         if (indexes.isEmpty()) {
             indexes.add("index.html");
         }
+
+        sslKeyStorePath = section.getString("keystore.path", "keystore.jks");
+        sslKeyStorePassword = section.getString("keystore.password", "uniporter");
+
+        keyStoreExist = getKeyStore().exists();
+
         ConfigurationSection servers =
                 section.contains("server") ? section.getConfigurationSection("server") : section.createSection(
                         "server");

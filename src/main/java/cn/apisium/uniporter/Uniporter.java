@@ -4,7 +4,7 @@ import cn.apisium.uniporter.router.api.Config;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import cn.apisium.uniporter.router.defaults.DefaultStaticHandler;
-import cn.apisium.uniporter.router.listener.HttpRouterChannelCreator;
+import cn.apisium.uniporter.router.listener.RouterChannelCreator;
 import cn.apisium.uniporter.util.ReflectionFinder;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.annotation.plugin.*;
 import org.bukkit.plugin.java.annotation.plugin.author.Author;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 @Plugin(name = "Uniporter", version = "1.0")
@@ -48,16 +49,23 @@ public final class Uniporter extends JavaPlugin {
     }
 
     public static void registerHandler(String id, UniporterHttpHandler handler) {
-        getRouteConfig().registerHandler(id, handler);
+        registerHandler(id, handler, false);
     }
 
-    @Override
-    public void onLoad() {
+    public static void registerHandler(String id, UniporterHttpHandler handler, boolean isAutoRoute) {
+        getRouteConfig().registerHandler(id, handler);
+        if (isAutoRoute) {
+            registerRoute(new Route(String.format("/%s", id), id, true, new HashMap<>(),
+                    new HashMap<>()));
+        }
+    }
+
+    public void attachChannelHandler() {
         try {
             List<?> futures = ReflectionFinder.findChannelFutures();
-
             assert futures != null;
-            futures.stream().filter(f -> f instanceof ChannelFuture)
+            futures.stream()
+                    .filter(f -> f instanceof ChannelFuture)
                     .map(f -> (ChannelFuture) f).findFirst()
                     .ifPresent(future -> future.channel().pipeline().addFirst(new ChannelInboundHandlerAdapter() {
                         @Override
@@ -82,17 +90,19 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        instance = this;
         config = new Config(new File(this.getDataFolder(), "route.yml"));
-        Bukkit.getPluginManager().registerEvents(new HttpRouterChannelCreator(), this);
+        this.attachChannelHandler();
+
+        Bukkit.getPluginManager().registerEvents(new RouterChannelCreator(), this);
 
         // Register default static handler
         registerHandler("static", new DefaultStaticHandler());
 
-        instance = this;
         getLogger().info("Uniporter initialized");
 
         // Uncomment below to see how example works.
-        // new HttpHelloSender().register();
+        // Uniporter.registerHandler("helloworld", new HttpHelloSender(), true);
     }
 
     @Override

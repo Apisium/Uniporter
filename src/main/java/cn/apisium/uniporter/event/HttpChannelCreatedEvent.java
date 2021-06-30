@@ -1,10 +1,9 @@
 package cn.apisium.uniporter.event;
 
 import io.netty.channel.Channel;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-public class ChannelCreatedEvent extends Event {
+public class HttpChannelCreatedEvent extends ChannelCreatedEvent {
     private static HandlerList handlerList = new HandlerList();
 
     public static HandlerList getHandlerList() {
@@ -16,14 +15,7 @@ public class ChannelCreatedEvent extends Event {
         return handlerList;
     }
 
-    private final Channel channel;
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public ChannelCreatedEvent(Channel channel) {
-        super();
-        this.channel = channel;
+    public HttpChannelCreatedEvent(Channel channel) {
+        super(channel);
     }
 }
