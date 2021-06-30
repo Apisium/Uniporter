@@ -21,9 +21,9 @@ public class DefaultStaticHandler implements HttpHandler {
         String basePath = route.getOptions().computeIfAbsent("path",
                 (key) -> (Uniporter.getInstance().getDataFolder().getAbsolutePath() +
                         "/static")).toString();
-        Path base;
-        if (!(base = Paths.get(basePath)).isAbsolute()) {
-            route.getOptions().put("path", basePath = base.toAbsolutePath().toString());
+        if (!(Paths.get(basePath)).isAbsolute()) {
+            basePath = Uniporter.getInstance().getDataFolder().getAbsolutePath() + "/" + basePath;
+            route.getOptions().put("path", basePath = Paths.get(basePath).toAbsolutePath().toString());
         }
 
         File file = new File(basePath + path);
