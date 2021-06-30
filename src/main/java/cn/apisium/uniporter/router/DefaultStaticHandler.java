@@ -7,6 +7,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 
+import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,7 +31,11 @@ public class DefaultStaticHandler implements HttpHandler {
                         HttpVersion.HTTP_1_1,
                         HttpResponseStatus.OK,
                         Unpooled.copiedBuffer(Files.readAllBytes(target)));
-                response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+                String mime = Files.probeContentType(target);
+                if (mime.equalsIgnoreCase("text/html")) {
+                    mime += "; charset=UTF-8";
+                }
+                response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
                 context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
             } catch (IOException e) {
                 IllegalHttpStateException.send(context, e);
