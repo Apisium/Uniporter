@@ -2,6 +2,9 @@ package cn.apisium.uniporter.router.api;
 
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
+import cn.apisium.uniporter.server.SimpleHttpServer;
+import cn.apisium.uniporter.server.SimpleHttpsServer;
+import cn.apisium.uniporter.server.SimpleServer;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -22,6 +25,7 @@ public class Config {
 
     List<String> indexes;
     HashMap<String, Route> routes = new HashMap<>();
+    HashMap<String, SimpleServer> additionalServers = new HashMap<>();
     HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
 
     boolean keyStoreExist = false;
@@ -96,7 +100,7 @@ public class Config {
             server.getKeys(false).forEach(path -> {
                 ConfigurationSection routeConfig = server.getConfigurationSection(path);
                 assert routeConfig != null;
-                registerRoute(new Route(
+                registerRoute(key, routeConfig.getBoolean("options.ssl", false), new Route(
                         path,
                         routeConfig.getString("handler", "static"),
                         routeConfig.getBoolean("gzip", true),
@@ -116,6 +120,14 @@ public class Config {
                                 .orElse(new HashMap<>())));
             });
         });
+        additionalServers.values().forEach(server -> {
+            try {
+                server.start();
+                Uniporter.getInstance().getLogger().info(String.format("Server on port %s started.", server.getPort()));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public void registerHandler(String id, UniporterHttpHandler handler) {
@@ -123,18 +135,41 @@ public class Config {
     }
 
     public void registerRoute(Route route) {
-        routes.putIfAbsent(route.getPath(), route);
+        registerRoute(":minecraft", true, route);
+    }
+
+    public void registerRoute(String logicalPort, boolean ssl, Route route) {
+        if (!logicalPort.startsWith(":")) {
+            // TODO: parse server ip
+            return;
+        }
+        routes.putIfAbsent(route.getPath() + logicalPort, route);
+        if (!logicalPort.equalsIgnoreCase(":minecraft")) {
+            try {
+                int port = Integer.parseInt(logicalPort.substring(1));
+                additionalServers.computeIfAbsent(logicalPort, (key) -> ssl ? new SimpleHttpsServer(port) :
+                        new SimpleHttpServer(port));
+            } catch (Throwable ignore) {
+            }
+        }
+
     }
 
     public Optional<UniporterHttpHandler> getHandler(String id) {
         return Optional.ofNullable(handlers.get(id));
     }
 
-    public Route findRoute(String path) throws IllegalHttpStateException {
+    public Route findRoute(String logicalPort, String path) throws IllegalHttpStateException {
+        path = path + logicalPort;
+        String finalPath = path;
         return routes.computeIfAbsent(path, p -> routes.keySet().stream()
-                .filter(path::startsWith)
+                .filter(finalPath::startsWith)
                 .max(Comparator.comparingInt(String::length))
                 .map(routes::get)
                 .orElseThrow(() -> new IllegalHttpStateException(HttpResponseStatus.NOT_FOUND)));
+    }
+
+    public Route findRoute(String path) throws IllegalHttpStateException {
+        return findRoute(":minecraft", path);
     }
 }

@@ -3,16 +3,19 @@ package cn.apisium.uniporter.router.handler;
 
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
-import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import cn.apisium.uniporter.router.api.Route;
-import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import cn.apisium.uniporter.router.api.message.RoutedHttpRequest;
+import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import cn.apisium.uniporter.util.PathResolver;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.bukkit.Bukkit;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URL;
 
 public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
@@ -39,13 +42,20 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         }
 
         try {
-            Route route = Uniporter.getRouteConfig().findRoute(path);
+            SocketAddress address = context.channel().localAddress();
+            String logicalPort = ":minecraft";
+            int port;
+            if (address instanceof InetSocketAddress
+                    && (port = ((InetSocketAddress) address).getPort()) != Bukkit.getPort()) {
+                logicalPort = ":" + port;
+            }
+
+            Route route = Uniporter.getRouteConfig().findRoute(logicalPort, path);
             UniporterHttpHandler handler =
                     Uniporter.getRouteConfig().getHandler(route.getHandler()).orElseThrow(IllegalHttpStateException::new);
             if (!route.isGzip() && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
                 context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
             }
-            //handler.handle(path, route, context, request);
             context.fireChannelRead(new RoutedHttpRequest(path, request, route, handler));
         } catch (IllegalHttpStateException exception) {
             exception.printStackTrace();
