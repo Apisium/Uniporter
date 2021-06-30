@@ -48,6 +48,10 @@ public final class Uniporter extends JavaPlugin {
         getRouteConfig().registerRoute(route);
     }
 
+    public static void registerRoute(int port, boolean ssl, Route route) {
+        getRouteConfig().registerRoute(":" + port, ssl, route);
+    }
+
     public static void registerHandler(String id, UniporterHttpHandler handler) {
         registerHandler(id, handler, false);
     }
