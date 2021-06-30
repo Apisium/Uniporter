@@ -1,7 +1,10 @@
-package cn.apisium.uniporter.router;
+package cn.apisium.uniporter.router.defaults;
 
 import cn.apisium.uniporter.Uniporter;
+import cn.apisium.uniporter.router.api.Route;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
+import cn.apisium.uniporter.router.api.message.RoutedHttpResponse;
 import cn.apisium.uniporter.util.PathResolver;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
@@ -14,10 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public class DefaultStaticHandler implements HttpHandler {
+public class DefaultStaticHandler implements UniporterHttpHandler {
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-        path = PathResolver.resolvePath(path.substring(route.path.length()));
+        path = PathResolver.resolvePath(path.substring(route.getPath().length()));
         String basePath = route.getOptions().computeIfAbsent("path",
                 (key) -> (Uniporter.getInstance().getDataFolder().getAbsolutePath() +
                         "/static")).toString();
@@ -29,7 +32,7 @@ public class DefaultStaticHandler implements HttpHandler {
         File file = new File(basePath + path);
 
         if (file.isDirectory()) {
-            for (String defaultName : Uniporter.getRouteConfig().indexes) {
+            for (String defaultName : Uniporter.getRouteConfig().getIndexes()) {
                 File temp = new File(file, defaultName);
                 if (temp.exists()) {
                     file = temp;
@@ -55,7 +58,7 @@ public class DefaultStaticHandler implements HttpHandler {
                     mime += "; charset=UTF-8";
                 }
                 response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
-                context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+                context.writeAndFlush(new RoutedHttpResponse(path, response, route)).addListener(ChannelFutureListener.CLOSE);
             } catch (IOException e) {
                 IllegalHttpStateException.send(context, e);
             }

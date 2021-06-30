@@ -1,5 +1,7 @@
-package cn.apisium.uniporter.router;
+package cn.apisium.uniporter.router.api;
 
+import cn.apisium.uniporter.router.api.Route;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.bukkit.configuration.ConfigurationSection;
@@ -17,7 +19,23 @@ public class Config {
     ConfigurationSection section;
     List<String> indexes = new ArrayList<>();
     HashMap<String, Route> routes = new HashMap<>();
-    HashMap<String, HttpHandler> handlers = new HashMap<>();
+    HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
+
+    public ConfigurationSection getSection() {
+        return section;
+    }
+
+    public List<String> getIndexes() {
+        return indexes;
+    }
+
+    public HashMap<String, Route> getRoutes() {
+        return routes;
+    }
+
+    public HashMap<String, UniporterHttpHandler> getHandlers() {
+        return handlers;
+    }
 
     public boolean isDebug() {
         return section.getBoolean("debug", false);
@@ -73,15 +91,15 @@ public class Config {
         });
     }
 
-    public void registerHandler(String id, HttpHandler handler) {
+    public void registerHandler(String id, UniporterHttpHandler handler) {
         handlers.put(id, handler);
     }
 
     public void registerRoute(Route route) {
-        routes.putIfAbsent(route.path, route);
+        routes.putIfAbsent(route.getPath(), route);
     }
 
-    public Optional<HttpHandler> getHandler(String id) {
+    public Optional<UniporterHttpHandler> getHandler(String id) {
         return Optional.ofNullable(handlers.get(id));
     }
 

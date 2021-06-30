@@ -1,8 +1,8 @@
 package cn.apisium.uniporter.example;
 
 import cn.apisium.uniporter.Uniporter;
-import cn.apisium.uniporter.router.HttpHandler;
-import cn.apisium.uniporter.router.Route;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import cn.apisium.uniporter.router.api.Route;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -11,7 +11,7 @@ import io.netty.handler.codec.http.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
-public class HttpHelloSender implements HttpHandler {
+public class HttpHelloSender implements UniporterHttpHandler {
     public void register() {
         Uniporter.registerHandler("hello world example", this);
         Uniporter.registerRoute(new Route("/helloworld", "hello world example", false, new HashMap<>(),

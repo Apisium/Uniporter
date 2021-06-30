@@ -2,7 +2,9 @@ package cn.apisium.uniporter.router.listener;
 
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.event.ChannelCreatedEvent;
-import cn.apisium.uniporter.router.HttpServerHandler;
+import cn.apisium.uniporter.router.handler.HttpServerHandler;
+import cn.apisium.uniporter.router.handler.RoutedHttpResponseHandler;
+import cn.apisium.uniporter.router.handler.RoutedHttpRequestHandler;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObjectAggregator;
@@ -22,5 +24,7 @@ public class HttpRouterChannelCreator implements Listener {
         ch.pipeline().addLast("uniporter-http-chunked", new ChunkedWriteHandler());
         ch.pipeline().addLast(Constants.GZIP_HANDLER_ID, new HttpContentCompressor());
         ch.pipeline().addLast("uniporter-http-server", new HttpServerHandler());
+        ch.pipeline().addLast("uniporter-http-routed-outbound", new RoutedHttpResponseHandler());
+        ch.pipeline().addLast("uniporter-http-routed-inbound", new RoutedHttpRequestHandler());
     }
 }

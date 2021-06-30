@@ -1,9 +1,12 @@
-package cn.apisium.uniporter.router;
+package cn.apisium.uniporter.router.handler;
 
 
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
+import cn.apisium.uniporter.router.api.message.RoutedHttpRequest;
 import cn.apisium.uniporter.util.PathResolver;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -13,6 +16,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.net.URL;
 
 public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+
+    private static void sendNoRouter(String path, ChannelHandlerContext context) {
+        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("没有找到对应的路由。<br>%s",
+                path));
+    }
+
 
     @Override
     protected void channelRead0(ChannelHandlerContext context, FullHttpRequest request) throws Exception {
@@ -31,12 +40,13 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
 
         try {
             Route route = Uniporter.getRouteConfig().findRoute(path);
-            HttpHandler handler =
+            UniporterHttpHandler handler =
                     Uniporter.getRouteConfig().getHandler(route.getHandler()).orElseThrow(IllegalHttpStateException::new);
-            if (!route.gzip && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
+            if (!route.isGzip() && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
                 context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
             }
-            handler.handle(path, route, context, request);
+            //handler.handle(path, route, context, request);
+            context.fireChannelRead(new RoutedHttpRequest(path, request, route, handler));
         } catch (IllegalHttpStateException exception) {
             exception.printStackTrace();
             sendNoRouter(path, context);
@@ -44,10 +54,5 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
             e.printStackTrace();
             IllegalHttpStateException.send(context, e);
         }
-    }
-
-    private static void sendNoRouter(String path, ChannelHandlerContext context) {
-        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("没有找到对应的路由。<br>%s",
-                path));
     }
 }

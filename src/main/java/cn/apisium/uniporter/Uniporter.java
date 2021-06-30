@@ -1,9 +1,9 @@
 package cn.apisium.uniporter;
 
-import cn.apisium.uniporter.router.Config;
-import cn.apisium.uniporter.router.DefaultStaticHandler;
-import cn.apisium.uniporter.router.HttpHandler;
-import cn.apisium.uniporter.router.Route;
+import cn.apisium.uniporter.router.api.Config;
+import cn.apisium.uniporter.router.api.Route;
+import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import cn.apisium.uniporter.router.defaults.DefaultStaticHandler;
 import cn.apisium.uniporter.router.listener.HttpRouterChannelCreator;
 import cn.apisium.uniporter.util.ReflectionFinder;
 import io.netty.channel.ChannelFuture;
@@ -47,7 +47,7 @@ public final class Uniporter extends JavaPlugin {
         getRouteConfig().registerRoute(route);
     }
 
-    public static void registerHandler(String id, HttpHandler handler) {
+    public static void registerHandler(String id, UniporterHttpHandler handler) {
         getRouteConfig().registerHandler(id, handler);
     }
 
@@ -90,7 +90,6 @@ public final class Uniporter extends JavaPlugin {
 
         instance = this;
         getLogger().info("Uniporter initialized");
-
 
         // Uncomment below to see how example works.
         // new HttpHelloSender().register();
