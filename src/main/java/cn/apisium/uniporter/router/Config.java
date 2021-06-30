@@ -10,14 +10,12 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Config {
     ConfigurationSection section;
+    List<String> indexes = new ArrayList<>();
     HashMap<String, Route> routes = new HashMap<>();
     HashMap<String, HttpHandler> handlers = new HashMap<>();
 
@@ -39,6 +37,10 @@ public class Config {
             }
         }
         section = YamlConfiguration.loadConfiguration(file);
+        indexes = section.getStringList("indexes");
+        if (indexes.isEmpty()) {
+            indexes.add("index.html");
+        }
         ConfigurationSection servers =
                 section.contains("server") ? section.getConfigurationSection("server") : section.createSection(
                         "server");
@@ -53,7 +55,7 @@ public class Config {
                         path,
                         routeConfig.getString("handler", "static"),
                         routeConfig.getBoolean("gzip", true),
-                        Optional.ofNullable(routeConfig.get("headers", null))
+                        Optional.ofNullable(routeConfig.get("options", null))
                                 .filter(o -> o instanceof ConfigurationSection)
                                 .map(o -> (ConfigurationSection) o)
                                 .map(o -> o.getValues(true))

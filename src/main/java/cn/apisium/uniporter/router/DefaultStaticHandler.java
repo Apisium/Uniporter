@@ -2,25 +2,44 @@ package cn.apisium.uniporter.router;
 
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
+import cn.apisium.uniporter.util.PathResolver;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 
-import javax.activation.MimetypesFileTypeMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class DefaultStaticHandler implements HttpHandler {
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-        File file =
-                new File(route.getOptions().getOrDefault("path",
-                        Uniporter.getInstance().getDataFolder().getAbsolutePath() +
-                                "/static").toString() + path);
+        path = PathResolver.resolvePath(path.substring(route.path.length()));
+        String basePath = route.getOptions().computeIfAbsent("path",
+                (key) -> (Uniporter.getInstance().getDataFolder().getAbsolutePath() +
+                        "/static")).toString();
+        Path base;
+        if (!(base = Paths.get(basePath)).isAbsolute()) {
+            route.getOptions().put("path", basePath = base.toAbsolutePath().toString());
+        }
+
+        File file = new File(basePath + path);
+
+        if (file.isDirectory()) {
+            for (String defaultName : Uniporter.getRouteConfig().indexes) {
+                File temp = new File(file, defaultName);
+                if (temp.exists()) {
+                    file = temp;
+                    break;
+                }
+            }
+        }
+
         Path target = file.getAbsoluteFile().toPath();
+
         if (!file.exists()) {
             IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, "File not found");
         } else if (file.isDirectory()) {
