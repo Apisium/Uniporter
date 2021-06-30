@@ -22,7 +22,7 @@ public class Decoder extends ByteToMessageDecoder {
             context.channel().pipeline().fireChannelRead(buf);
         } else {
             buf.resetReaderIndex();
-            context.channel().pipeline().remove("uniporterde");
+            context.channel().pipeline().remove(Constants.DECODER_ID);
             context.fireChannelRead(buf);
         }
     }
@@ -32,7 +32,7 @@ public class Decoder extends ByteToMessageDecoder {
             List<String> original = context.channel().pipeline().names();
             List<String> names = new ArrayList<>(original.size());
             names.addAll(original);
-            names.remove("DefaultChannelPipeline$TailContext#0");
+            names.remove(Constants.DEFAULT_TAIL_ID);
             names.forEach(context.channel().pipeline()::remove);
             Bukkit.getPluginManager().callEvent(new ChannelCreatedEvent(context.channel()));
         } catch (Throwable e) {

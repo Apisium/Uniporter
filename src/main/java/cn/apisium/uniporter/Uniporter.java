@@ -1,6 +1,5 @@
 package cn.apisium.uniporter;
 
-import cn.apisium.uniporter.example.HttpHelloSender;
 import cn.apisium.uniporter.router.Config;
 import cn.apisium.uniporter.router.DefaultStaticHandler;
 import cn.apisium.uniporter.router.HttpHandler;
@@ -65,10 +64,10 @@ public final class Uniporter extends JavaPlugin {
                         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                             if (msg instanceof NioSocketChannel) {
                                 NioSocketChannel channel = (NioSocketChannel) msg;
-                                if (channel.pipeline().names().contains("uniporter-decoder")) {
-                                    channel.pipeline().remove("uniporter-decoder");
+                                if (channel.pipeline().names().contains(Constants.DECODER_ID)) {
+                                    channel.pipeline().remove(Constants.DECODER_ID);
                                 }
-                                channel.pipeline().addLast("uniporter-decoder", new Decoder());
+                                channel.pipeline().addLast(Constants.DECODER_ID, new Decoder());
                                 super.channelRead(ctx, channel);
                             } else {
                                 super.channelRead(ctx, msg);

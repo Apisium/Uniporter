@@ -1,6 +1,7 @@
 package cn.apisium.uniporter.router;
 
 
+import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import cn.apisium.uniporter.util.PathResolver;
@@ -32,11 +33,15 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
             Route route = Uniporter.getRouteConfig().findRoute(path);
             HttpHandler handler =
                     Uniporter.getRouteConfig().getHandler(route.getHandler()).orElseThrow(IllegalHttpStateException::new);
+            if (!route.gzip && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
+                context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
+            }
             handler.handle(path, route, context, request);
         } catch (IllegalHttpStateException exception) {
             exception.printStackTrace();
             sendNoRouter(path, context);
         } catch (Throwable e) {
+            e.printStackTrace();
             IllegalHttpStateException.send(context, e);
         }
     }
