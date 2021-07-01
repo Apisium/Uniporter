@@ -7,6 +7,7 @@ import cn.apisium.uniporter.router.defaults.DefaultStaticHandler;
 import cn.apisium.uniporter.router.listener.RouterChannelCreator;
 import cn.apisium.uniporter.util.ReflectionFinder;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -76,10 +77,9 @@ public final class Uniporter extends JavaPlugin {
                         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
                             if (msg instanceof NioSocketChannel) {
                                 NioSocketChannel channel = (NioSocketChannel) msg;
-                                if (channel.pipeline().names().contains(Constants.DECODER_ID)) {
-                                    channel.pipeline().remove(Constants.DECODER_ID);
+                                if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
+                                    channel.pipeline().addLast(Constants.DECODER_ID, new Decoder());
                                 }
-                                channel.pipeline().addLast(Constants.DECODER_ID, new Decoder());
                                 super.channelRead(ctx, channel);
                             } else {
                                 super.channelRead(ctx, msg);
@@ -111,6 +111,11 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getRouteConfig().getAdditionalServers().values().forEach(server -> {
+            server.getFuture().addListener(ChannelFutureListener.CLOSE);
+            server.getFuture().syncUninterruptibly();
+        });
+
         getLogger().info("Uniporter disabled.");
     }
 }

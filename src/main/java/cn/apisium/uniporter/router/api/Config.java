@@ -33,6 +33,14 @@ public class Config {
 
     boolean keyStoreExist = false;
 
+    public HashMap<String, HashMap<String, Route>> getRouteCache() {
+        return routeCache;
+    }
+
+    public HashMap<String, SimpleServer> getAdditionalServers() {
+        return additionalServers;
+    }
+
     public File getKeyStore() {
         return new File(Uniporter.getInstance().getDataFolder(), getSslKeyStorePath()).getAbsoluteFile();
     }
