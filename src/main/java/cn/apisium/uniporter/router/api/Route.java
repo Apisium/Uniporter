@@ -1,20 +1,32 @@
 package cn.apisium.uniporter.router.api;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Route {
     String path;
     String handler;
     boolean gzip;
+    List<Pattern> hosts;
     Map<String, Object> options;
     Map<String, String> header;
 
     public Route(String path, String handler, boolean gzip, Map<String, Object> options, Map<String, String> header) {
+        this(path, handler, gzip, Collections.emptyList(), options, header);
+    }
+
+
+    public Route(String path, String handler, boolean gzip, List<String> hosts, Map<String, Object> options,
+                 Map<String, String> header) {
         this.path = path;
         this.handler = handler;
         this.gzip = gzip;
         this.header = header;
         this.options = options;
+        this.hosts = hosts.stream().map(Pattern::compile).collect(Collectors.toList());
     }
 
     public String getPath() {

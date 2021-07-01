@@ -6,6 +6,7 @@ import cn.apisium.uniporter.server.SimpleHttpServer;
 import cn.apisium.uniporter.server.SimpleHttpsServer;
 import cn.apisium.uniporter.server.SimpleServer;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Config {
     ConfigurationSection section;
@@ -24,7 +26,8 @@ public class Config {
     String sslKeyStorePassword;
 
     List<String> indexes;
-    HashMap<String, Route> routes = new HashMap<>();
+    HashMap<String, HashMap<String, HashSet<Route>>> routes = new HashMap<>();
+    HashMap<String, HashMap<String, Route>> routeCache = new HashMap<>();
     HashMap<String, SimpleServer> additionalServers = new HashMap<>();
     HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
 
@@ -54,7 +57,7 @@ public class Config {
         return indexes;
     }
 
-    public HashMap<String, Route> getRoutes() {
+    public HashMap<String, HashMap<String, HashSet<Route>>> getRoutes() {
         return routes;
     }
 
@@ -104,6 +107,7 @@ public class Config {
                         path,
                         routeConfig.getString("handler", "static"),
                         routeConfig.getBoolean("gzip", true),
+                        routeConfig.getStringList("hosts"),
                         Optional.ofNullable(routeConfig.get("options", null))
                                 .filter(o -> o instanceof ConfigurationSection)
                                 .map(o -> (ConfigurationSection) o)
@@ -140,15 +144,20 @@ public class Config {
 
     public void registerRoute(String logicalPort, boolean ssl, Route route) {
         if (!logicalPort.startsWith(":")) {
-            // TODO: parse server ip
             return;
         }
-        routes.putIfAbsent(route.getPath() + logicalPort, route);
+
+        HashSet<Route> portedRoutes =
+                routes.computeIfAbsent(logicalPort, (key) -> new HashMap<>())
+                        .computeIfAbsent(route.getPath(), (key) -> new HashSet<>());
+        portedRoutes.add(route);
+
         if (!logicalPort.equalsIgnoreCase(":minecraft")) {
             try {
                 int port = Integer.parseInt(logicalPort.substring(1));
-                additionalServers.computeIfAbsent(logicalPort, (key) -> ssl ? new SimpleHttpsServer(port) :
-                        new SimpleHttpServer(port));
+                if (Bukkit.getPort() != port)
+                    additionalServers.computeIfAbsent(logicalPort, (key) -> ssl ? new SimpleHttpsServer(port) :
+                            new SimpleHttpServer(port));
             } catch (Throwable ignore) {
             }
         }
@@ -159,17 +168,26 @@ public class Config {
         return Optional.ofNullable(handlers.get(id));
     }
 
-    public Route findRoute(String logicalPort, String path) throws IllegalHttpStateException {
-        path = path + logicalPort;
-        String finalPath = path;
-        return routes.computeIfAbsent(path, p -> routes.keySet().stream()
-                .filter(finalPath::startsWith)
-                .max(Comparator.comparingInt(String::length))
-                .map(routes::get)
+    public Route findRoute(String logicalPort, String host, String path) throws IllegalHttpStateException {
+        HashMap<String, Route> cachedRoutes = routeCache.computeIfAbsent(host, (key) -> new HashMap<>());
+        Stream<Route> portedRoutes = this.getRoutes()
+                .computeIfAbsent(logicalPort, (key) -> new HashMap<>())
+                .values().stream().filter(sets -> sets.stream().anyMatch(route -> path.startsWith(route.getPath())))
+                .flatMap(Set::stream);
+        String cacheKey = host + "#" + path + "#" + logicalPort;
+        return cachedRoutes.computeIfAbsent(cacheKey, p -> portedRoutes
+                .filter(route -> path.startsWith(route.getPath()))
+                .filter(route -> route.hosts.size() == 0
+                        || host == null
+                        || host.isEmpty()
+                        || route.hosts.stream().anyMatch(
+                        pattern -> pattern.matcher(host.substring(0, host.lastIndexOf(":"))).find())
+                        || route.hosts.stream().anyMatch(pattern -> pattern.matcher(host).find()))
+                .max(Comparator.comparingInt((route) -> route.path.length()))
                 .orElseThrow(() -> new IllegalHttpStateException(HttpResponseStatus.NOT_FOUND)));
     }
 
     public Route findRoute(String path) throws IllegalHttpStateException {
-        return findRoute(":minecraft", path);
+        return findRoute(":minecraft", "", path);
     }
 }

@@ -50,7 +50,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                 logicalPort = ":" + port;
             }
 
-            Route route = Uniporter.getRouteConfig().findRoute(logicalPort, path);
+            Route route = Uniporter.getRouteConfig().findRoute(logicalPort, request.headers().get("Host", ""), path);
             UniporterHttpHandler handler =
                     Uniporter.getRouteConfig().getHandler(route.getHandler()).orElseThrow(IllegalHttpStateException::new);
             if (!route.isGzip() && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
