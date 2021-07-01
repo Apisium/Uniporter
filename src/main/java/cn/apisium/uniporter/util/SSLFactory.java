@@ -11,29 +11,58 @@ import java.io.InputStream;
 import java.security.KeyStore;
 import java.util.HashMap;
 
-public class SslFactory {
-
+/**
+ * Create SSL related instances.
+ *
+ * @author Baleine_2000
+ */
+public class SSLFactory {
     private static final HashMap<String, SSLContext> contexts = new HashMap<>();
 
+    /**
+     * Create server side {@link SSLEngine} instance for Uniporter keystore.
+     *
+     * @return a new {@link SSLEngine}
+     */
     public static SSLEngine createEngine() {
-        return createEngine(Uniporter.getRouteConfig().getKeyStore().getAbsolutePath());
+        return createEngine(
+                Uniporter.getRouteConfig().getKeyStore().getAbsolutePath(),
+                Uniporter.getRouteConfig().getSslKeyStorePassword());
     }
 
-    public static SSLEngine createEngine(String keyPath) {
-        SSLEngine engine = getContext(keyPath).createSSLEngine();
+    /**
+     * Create server side {@link SSLEngine} instance for the given keystore.
+     * <p>
+     * Keystore should be JKS format.
+     *
+     * @param keyPath  the keystore path
+     * @param password password of the keystore
+     * @return a new {@link SSLEngine}
+     */
+    public static SSLEngine createEngine(String keyPath, String password) {
+        SSLEngine engine = getContext(keyPath, password).createSSLEngine();
         engine.setUseClientMode(false);
         engine.setNeedClientAuth(false);
         return engine;
     }
 
-    public static SSLContext getContext(String keyPath) {
+    /**
+     * Get the {@link SSLContext} for the given keystore.
+     * <p>
+     * Keystore should be JKS format.
+     *
+     * @param keyPath  the keystore path
+     * @param password password of the keystore
+     * @return a new or cached {@link SSLContext}
+     */
+    public static SSLContext getContext(String keyPath, String password) {
         return contexts.computeIfAbsent(keyPath, (key) -> {
             SSLContext context;
             if (keyPath == null) {
                 throw new IllegalArgumentException("Key path should not be null");
             }
 
-            String password = Uniporter.getRouteConfig().getSslKeyStorePassword();
+            // Load the keystore
             try (InputStream keyInput = new FileInputStream(keyPath)) {
                 KeyStore store = KeyStore.getInstance(Constants.KEY_STORE_FORMAT);
                 store.load(keyInput, password.toCharArray());

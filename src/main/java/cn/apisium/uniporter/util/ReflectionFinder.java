@@ -9,57 +9,17 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A dirty reflection helper which find the Minecraft's Netty channel.
+ *
+ * @author Baleine_2000
+ */
 public class ReflectionFinder {
-    public static Class<?> getCraftServerClass() {
-        return Bukkit.getServer().getClass();
-    }
-
-    public static Method getGenericHandleMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
-        return clazz.getDeclaredMethod("getHandle");
-    }
-
-    public static Method getServerMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
-        return clazz.getDeclaredMethod("getServer");
-    }
-
-    public static Method getServerConnectionMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
-        return clazz.getDeclaredMethod("getServerConnection");
-    }
-
-    public static Object getServerConnection() {
-        Object server = getMinecraftServer();
-        try {
-            assert server != null;
-            return getServerConnectionMethodFromClass(Objects.requireNonNull(getMinecraftServerClass())).invoke(server);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static Class<?> getMinecraftServerClass() {
-        try {
-            Class<?> clazz = getServerMethodFromClass(getCraftServerClass()).getReturnType();
-            if (clazz.getName().contains("DedicatedServer")) {
-                clazz = clazz.getSuperclass();
-            }
-            return clazz;
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    public static Object getMinecraftServer() {
-        Class<?> serverClass = getCraftServerClass();
-        try {
-            return getServerMethodFromClass(serverClass).invoke(Bukkit.getServer());
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
+    /**
+     * Find the list of Minecraft's Netty channels, usually (1.12.2 to 1.17) it contains only one channel.
+     *
+     * @return list of Minecraft's Netty channels
+     */
     public static List<?> findChannelFutures() {
         Object connection = getServerConnection();
         assert connection != null;
@@ -82,4 +42,50 @@ public class ReflectionFinder {
         return null;
     }
 
+    // Internal helper methods
+    private static Class<?> getCraftServerClass() {
+        return Bukkit.getServer().getClass();
+    }
+
+    private static Method getServerMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
+        return clazz.getDeclaredMethod("getServer");
+    }
+
+    private static Method getServerConnectionMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
+        return clazz.getDeclaredMethod("getServerConnection");
+    }
+
+    private static Object getServerConnection() {
+        Object server = getMinecraftServer();
+        try {
+            assert server != null;
+            return getServerConnectionMethodFromClass(Objects.requireNonNull(getMinecraftServerClass())).invoke(server);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static Class<?> getMinecraftServerClass() {
+        try {
+            Class<?> clazz = getServerMethodFromClass(getCraftServerClass()).getReturnType();
+            if (clazz.getName().contains("DedicatedServer")) {
+                clazz = clazz.getSuperclass();
+            }
+            return clazz;
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static Object getMinecraftServer() {
+        Class<?> serverClass = getCraftServerClass();
+        try {
+            return getServerMethodFromClass(serverClass).invoke(Bukkit.getServer());
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

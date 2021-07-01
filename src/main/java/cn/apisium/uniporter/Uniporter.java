@@ -21,6 +21,11 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Uniporter plugin class, also contains some API methods.
+ *
+ * @author Baleine_2000
+ */
 @Plugin(name = "Uniporter", version = "1.0")
 @Description("A netty wrapper for Minecraft, which allows running multiple protocols in same port.")
 @Author("Baleine_2000")
@@ -28,35 +33,67 @@ import java.util.List;
 @Website("https://apisium.cn")
 @ApiVersion(ApiVersion.Target.v1_13)
 public final class Uniporter extends JavaPlugin {
-
     private static Uniporter instance;
+    private static Config config;
 
+    /**
+     * @return Plugin's instance
+     */
     public static Uniporter getInstance() {
         return instance;
     }
 
-    private static Config config;
-
+    /**
+     * @return The route config
+     */
     public static Config getRouteConfig() {
         return config;
     }
 
+    /**
+     * @return is in debug environment
+     */
     public static boolean isDebug() {
         return getRouteConfig().isDebug();
     }
 
+    /**
+     * Register a route listen to minecraft port.
+     *
+     * @param route the route need to be registered
+     */
     public static void registerRoute(Route route) {
         getRouteConfig().registerRoute(route);
     }
 
+    /**
+     * Register a route, with given port to listen to, and will ssl be used
+     *
+     * @param port  port it listen to
+     * @param ssl   use ssl or not
+     * @param route the route need to be registered
+     */
     public static void registerRoute(int port, boolean ssl, Route route) {
         getRouteConfig().registerRoute(":" + port, ssl, route);
     }
 
+    /**
+     * Register handler for later use.
+     *
+     * @param id      the unique handler id, the very last handler registered with same id will be used
+     * @param handler the handler who will process the http request
+     */
     public static void registerHandler(String id, UniporterHttpHandler handler) {
         registerHandler(id, handler, false);
     }
 
+    /**
+     * Register handler for later use.
+     *
+     * @param id          the unique handler id, the very last handler registered with same id will be used
+     * @param handler     the handler who will process the http request
+     * @param isAutoRoute will the handler register a route corresponding to its id immediately
+     */
     public static void registerHandler(String id, UniporterHttpHandler handler, boolean isAutoRoute) {
         getRouteConfig().registerHandler(id, handler);
         if (isAutoRoute) {
@@ -65,7 +102,10 @@ public final class Uniporter extends JavaPlugin {
         }
     }
 
-    public void attachChannelHandler() {
+    /**
+     * Attach channel handler to Minecraft
+     */
+    private void attachChannelHandler() {
         try {
             List<?> futures = ReflectionFinder.findChannelFutures();
             assert futures != null;
@@ -111,6 +151,7 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Close all previous opened servers
         getRouteConfig().getAdditionalServers().values().forEach(server -> {
             server.getFuture().addListener(ChannelFutureListener.CLOSE);
             server.getFuture().syncUninterruptibly();

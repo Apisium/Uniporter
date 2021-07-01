@@ -8,6 +8,14 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 
+/**
+ * An aggregated data class contains a {@link FullHttpResponse} and {@link Route}
+ * <p>
+ * This also implements {@link FullHttpResponse}, which can be further processed by Netty. All method calls will be
+ * delegate to the original {@link FullHttpResponse}.
+ *
+ * @author Baleine_2000
+ */
 public class RoutedHttpResponse implements FullHttpResponse {
     String path;
     FullHttpResponse response;
@@ -42,6 +50,8 @@ public class RoutedHttpResponse implements FullHttpResponse {
     public void setRoute(Route route) {
         this.route = route;
     }
+
+    // Delegate methods
 
     @Override
     public FullHttpResponse copy() {

@@ -6,6 +6,9 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
+/**
+ * Translated from https://github.com/pillarjs/resolve-path/blob/master/index.js#L45
+ */
 public class PathResolver {
     private static final Pattern UP_PATH_REGEXP = Pattern.compile("(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)");
 

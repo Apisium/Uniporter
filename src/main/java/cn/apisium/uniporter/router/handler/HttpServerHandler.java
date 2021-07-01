@@ -1,6 +1,5 @@
 package cn.apisium.uniporter.router.handler;
 
-
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.api.Route;
@@ -18,18 +17,16 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.URL;
 
+/**
+ * Handles raw Http request and try to convert to routed Http request.
+ */
 public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-
-    private static void sendNoRouter(String path, ChannelHandlerContext context) {
-        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("没有找到对应的路由。<br>%s",
-                path));
-    }
-
-
     @Override
     protected void channelRead0(ChannelHandlerContext context, FullHttpRequest request) throws Exception {
+        // Only used to get formatted path, not the actual url
         URL url = new URL(String.format("https://localhost/%s", request.uri()));
 
+        // Parse path
         String path;
         try {
             path = PathResolver.resolvePath(url.getPath().substring(1)).replaceAll("[\\\\]", "/");
@@ -42,6 +39,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         }
 
         try {
+            // Check port and calculate the internal logical port
             SocketAddress address = context.channel().localAddress();
             String logicalPort = ":minecraft";
             int port;
@@ -50,19 +48,40 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                 logicalPort = ":" + port;
             }
 
-            Route route = Uniporter.getRouteConfig().findRoute(logicalPort, request.headers().get("Host", ""), path);
+            // Find the route corresponding to this request and calls the handler registered
+            Route route = Uniporter.getRouteConfig()
+                    .findRoute(logicalPort, request.headers().get("Host", ""), path);
             UniporterHttpHandler handler =
-                    Uniporter.getRouteConfig().getHandler(route.getHandler()).orElseThrow(IllegalHttpStateException::new);
+                    Uniporter.getRouteConfig()
+                            .getHandler(route.getHandler())
+                            .orElseThrow(IllegalHttpStateException::new);
+
+            // Check if the response need to be gzipped or not
             if (!route.isGzip() && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
                 context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
             }
+
+            // Send the routed request to next channel handler
             context.fireChannelRead(new RoutedHttpRequest(path, request, route, handler));
         } catch (IllegalHttpStateException exception) {
+            // This means router is not found, so send that
             exception.printStackTrace();
             sendNoRouter(path, context);
         } catch (Throwable e) {
+            // This is an unexpected error, should not happened
             e.printStackTrace();
             IllegalHttpStateException.send(context, e);
         }
+    }
+
+    /**
+     * Send no router exception via {@link IllegalHttpStateException}.
+     *
+     * @param path    current accessing path
+     * @param context current request context
+     */
+    private static void sendNoRouter(String path, ChannelHandlerContext context) {
+        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("没有找到对应的路由。<br>%s",
+                path));
     }
 }

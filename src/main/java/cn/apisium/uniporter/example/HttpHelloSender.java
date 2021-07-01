@@ -9,11 +9,16 @@ import io.netty.handler.codec.http.*;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * An example hello world sender.
+ * <p>
+ * Uncomment form plugin's main class or register by yourself to see how this works.
+ *
+ * @author Baleine_2000
+ */
 public class HttpHelloSender implements UniporterHttpHandler {
-
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
-
         String builder = "Hello world from Uniporter!" +
                 "<br>" +
                 "<br>This is: " +
