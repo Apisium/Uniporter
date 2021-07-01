@@ -11,8 +11,9 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import java.net.InetSocketAddress;
 
 public class SimpleServer {
-    int port;
-    LambdaChannelInitializer initializer;
+    final int port;
+    final LambdaChannelInitializer initializer;
+    
     ChannelFuture future;
 
     public int getPort() {

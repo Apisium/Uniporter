@@ -26,12 +26,12 @@ public class Config {
     String sslKeyStorePassword;
 
     List<String> indexes;
-    HashMap<String, HashMap<String, HashSet<Route>>> routes = new HashMap<>();
-    HashMap<String, HashMap<String, Route>> routeCache = new HashMap<>();
-    HashMap<String, SimpleServer> additionalServers = new HashMap<>();
-    HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
+    final HashMap<String, HashMap<String, HashSet<Route>>> routes = new HashMap<>();
+    final HashMap<String, HashMap<String, Route>> routeCache = new HashMap<>();
+    final HashMap<String, SimpleServer> additionalServers = new HashMap<>();
+    final HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
 
-    boolean keyStoreExist = false;
+    boolean keyStoreExist;
 
     public HashMap<String, HashMap<String, Route>> getRouteCache() {
         return routeCache;

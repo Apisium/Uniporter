@@ -4,7 +4,7 @@ import io.netty.channel.Channel;
 import org.bukkit.event.HandlerList;
 
 public class SSLChannelCreatedEvent extends ChannelCreatedEvent {
-    private static HandlerList handlerList = new HandlerList();
+    private static final HandlerList handlerList = new HandlerList();
 
     public static HandlerList getHandlerList() {
         return handlerList;

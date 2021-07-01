@@ -10,8 +10,6 @@ import org.bukkit.Bukkit;
 import java.util.*;
 
 public class Decoder extends ByteToMessageDecoder {
-    boolean initialized = false;
-
     protected static final Set<Character> httpMethods = new HashSet<>(Arrays.asList('G', 'H', 'P', 'D', 'C', 'O', 'T'));
 
     @Override
@@ -19,7 +17,7 @@ public class Decoder extends ByteToMessageDecoder {
         buf.retain();
         buf.markReaderIndex();
         boolean handled = false;
-        if (buf.isReadable() && !initialized) {
+        if (buf.isReadable()) {
             byte head = buf.readByte();
             if (head == 22 && Uniporter.getRouteConfig().isKeyStoreExist()) {
                 registerSSL(context);

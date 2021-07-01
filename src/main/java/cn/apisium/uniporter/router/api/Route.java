@@ -10,9 +10,10 @@ public class Route {
     String path;
     String handler;
     boolean gzip;
-    List<Pattern> hosts;
     Map<String, Object> options;
     Map<String, String> header;
+
+    final List<Pattern> hosts;
 
     public Route(String path, String handler, boolean gzip, Map<String, Object> options, Map<String, String> header) {
         this(path, handler, gzip, Collections.emptyList(), options, header);
