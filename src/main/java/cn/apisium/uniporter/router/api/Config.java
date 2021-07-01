@@ -12,7 +12,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
@@ -97,8 +97,12 @@ public class Config {
         if (!file.exists()) {
             try {
                 if (file.getParentFile().mkdirs() && file.createNewFile()) {
-                    Files.write(file.toPath(), "server:\n    :minecraft:\n        /:\n            handler: static\n"
-                            .getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+                    InputStream defaultConfig = Objects.requireNonNull(
+                            this.getClass().getClassLoader().getResourceAsStream("route.yml"));
+                    byte[] contents = new byte[defaultConfig.available()];
+                    if (defaultConfig.read(contents) > 0) {
+                        Files.write(file.toPath(), contents, StandardOpenOption.CREATE);
+                    }
                 } else {
                     throw new IllegalStateException("config not created");
                 }
@@ -166,7 +170,8 @@ public class Config {
         additionalServers.values().forEach(server -> {
             try {
                 server.start();
-                Uniporter.getInstance().getLogger().info(String.format("Server on port %s started.", server.getPort()));
+                Uniporter.getInstance().getLogger().info(String.format("Server on port %s started.",
+                        server.getPort()));
             } catch (Exception e) {
                 e.printStackTrace();
             }

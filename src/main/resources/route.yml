@@ -1,0 +1,35 @@
+# Debug environmrnt, default: false
+debug: false
+# JKS format SSL ketstore
+keystore:
+    # Keystore path, relative to data folder
+    path: keystore.jks
+    # Keystore password, you should probably change it
+    password: uniporter
+# Servers need to be enable
+server:
+    # Listen on Minecraft port
+    :minecraft:
+        # Listen on path "/"
+        /:
+            # Static resources should be handled
+            handler: static
+    # Uncomment below to see how config works
+    ## Listen on port 80, with any host name localhost
+    #:80:
+    #    handler: static
+    #    # Gzip enable or not, default: true
+    #    gzip: false
+    #    # Extra options
+    #    options:
+    #        # SSL enable or not, default: false
+    #        ssl: false
+    #        # Path of static resources relative to data folder, default: ./static
+    #        path: ./html
+    #    # Extra headers
+    #    headers:
+    #        # Key is header's name, value is header's value
+    #        TestHeader: 'This is a test'
+    #    # Listen to hosts, each line is a regex
+    #    hosts:
+    #        - '^localhost$'
