@@ -1,6 +1,6 @@
-# Debug environmrnt, default: false
+# Debug environment, default: false
 debug: false
-# JKS format SSL ketstore
+# JKS format SSL keystore
 keystore:
     # Keystore path, relative to data folder
     path: keystore.jks
