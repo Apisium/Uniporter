@@ -38,7 +38,7 @@ public abstract class ChannelCreatedEvent extends Event {
     }
 
     public ChannelCreatedEvent(Channel channel) {
-        super();
+        super(true);
         this.channel = channel;
     }
 }
