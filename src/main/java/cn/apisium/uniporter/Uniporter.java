@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author Baleine_2000
  */
-@Plugin(name = "Uniporter", version = "1.0")
+@Plugin(name = "Uniporter", version = "1.1")
 @Description("A netty wrapper for Minecraft, which allows running multiple protocols in same port.")
 @Author("Baleine_2000")
 @LoadOrder(PluginLoadOrder.STARTUP)
