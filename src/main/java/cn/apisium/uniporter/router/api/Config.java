@@ -267,11 +267,12 @@ public class Config {
                 .computeIfAbsent(logicalPort, (key) -> new HashMap<>())
                 .values().stream()
                 // Find all routes sets can handle the given path
-                .filter(sets -> sets.stream().anyMatch(route -> path.startsWith(route.getPath())))
+                .filter(sets -> sets.stream().anyMatch(route ->
+                        path.equals(route.getPath()) || path.startsWith(route.getPath() + "/")))
                 // Combine to a large stream
                 .flatMap(Set::stream)
                 // Filters non related path routers
-                .filter(route -> path.startsWith(route.getPath()))
+                .filter(route -> path.equals(route.getPath()) || path.startsWith(route.getPath() + "/"))
                 // Filters non related host routers
                 // 0 size means it handles all hosts
                 .filter(route -> route.hosts.size() == 0
