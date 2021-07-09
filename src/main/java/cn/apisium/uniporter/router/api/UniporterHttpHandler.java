@@ -18,4 +18,8 @@ public interface UniporterHttpHandler {
      * @param request the http request
      */
     void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request);
+
+    default boolean needReFire() {
+        return false;
+    }
 }

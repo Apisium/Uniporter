@@ -189,6 +189,16 @@ public class Config {
     }
 
     /**
+     * Remove a registered handler.
+     *
+     * @param id the unique handler id
+     */
+    public void removeHandler(String id) {
+        handlers.remove(id);
+    }
+
+
+    /**
      * Register a route, with default ssl enable and listen to minecraft port.
      *
      * @param route the route need to be registered

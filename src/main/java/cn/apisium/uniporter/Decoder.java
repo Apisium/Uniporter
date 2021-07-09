@@ -68,11 +68,11 @@ public class Decoder extends ByteToMessageDecoder {
     }
 
     /**
-     * Clear channel handlers.
+     * Clear Netty channel handlers.
      *
      * @param context current Netty context
      */
-    protected void clearHandler(ChannelHandlerContext context) {
+    public static void clearHandler(ChannelHandlerContext context) {
         try {
             List<String> original = context.channel().pipeline().names();
             List<String> names = new ArrayList<>(original.size());

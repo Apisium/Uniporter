@@ -35,11 +35,11 @@ public class RouterChannelCreator implements Listener {
         pipeline.addLast(new HttpResponseEncoder());
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(Constants.GZIP_HANDLER_ID, new HttpContentCompressor());
-        pipeline.addLast(new HttpServerHandler());
+        pipeline.addLast(Constants.SERVER_HANDLER_ID, new HttpServerHandler());
 
         // Below are used to add header for routed requests
-        pipeline.addLast(new RoutedHttpResponseHandler());
-        pipeline.addLast(new RoutedHttpRequestHandler());
+        pipeline.addLast(Constants.ROUTED_RESPONSE_HANDLER_ID, new RoutedHttpResponseHandler());
+        pipeline.addLast(Constants.ROUTED_REQUEST_HANDLER_ID, new RoutedHttpRequestHandler());
     }
 
     @EventHandler

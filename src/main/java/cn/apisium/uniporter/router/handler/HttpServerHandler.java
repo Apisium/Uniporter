@@ -2,11 +2,15 @@ package cn.apisium.uniporter.router.handler;
 
 import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
+import cn.apisium.uniporter.event.RouteDetectedEvent;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
+import cn.apisium.uniporter.router.api.message.RoutedHttpFullRequest;
 import cn.apisium.uniporter.router.api.message.RoutedHttpRequest;
+import cn.apisium.uniporter.router.api.message.RoutedHttpResponse;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import cn.apisium.uniporter.util.PathResolver;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -61,8 +65,26 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
                 context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
             }
 
-            // Send the routed request to next channel handler
-            context.fireChannelRead(new RoutedHttpRequest(path, request, route, handler));
+            RouteDetectedEvent event = new RouteDetectedEvent(context.channel(), route, path);
+            Bukkit.getPluginManager().callEvent(event);
+
+            if (event.isCancelled()) {
+                IllegalHttpStateException.send(context, HttpResponseStatus.BAD_GATEWAY, "Cancelled");
+            } else if (event.getResponse() != null) {
+                context.writeAndFlush(new RoutedHttpResponse(path, event.getResponse(), route))
+                        .addListener(ChannelFutureListener.CLOSE);
+            } else if (event.isNeedReFire() || handler.needReFire()) {
+                context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
+                context.channel().pipeline().remove(Constants.SERVER_HANDLER_ID);
+                context.channel().pipeline().remove(Constants.ROUTED_REQUEST_HANDLER_ID);
+                context.channel().pipeline().remove(Constants.ROUTED_RESPONSE_HANDLER_ID);
+                request.retain();
+                handler.handle(path, route, context, request);
+                context.channel().pipeline().fireChannelRead(new RoutedHttpFullRequest(path, request, route, handler));
+            } else {
+                // Send the routed request to next channel handler
+                context.fireChannelRead(new RoutedHttpRequest(path, request, route, handler));
+            }
         } catch (IllegalHttpStateException exception) {
             // This means router is not found, so send that
             exception.printStackTrace();

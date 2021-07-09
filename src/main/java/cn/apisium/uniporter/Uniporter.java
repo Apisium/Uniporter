@@ -103,6 +103,24 @@ public final class Uniporter extends JavaPlugin {
     }
 
     /**
+     * Remove a registered handler.
+     *
+     * @param id the unique handler id
+     */
+    public static void removeHandler(String id) {
+        getRouteConfig().removeHandler(id);
+    }
+
+    /**
+     * Clear channel handlers.
+     *
+     * @param context current Netty context
+     */
+    public static void clearNettyHandler(ChannelHandlerContext context) {
+        Decoder.clearHandler(context);
+    }
+
+    /**
      * Attach channel handler to Minecraft
      */
     private void attachChannelHandler() {
@@ -147,6 +165,7 @@ public final class Uniporter extends JavaPlugin {
 
         // Uncomment below to see how example works.
         // Uniporter.registerHandler("helloworld", new HttpHelloSender(), true);
+        // Uniporter.registerHandler("helloworld-re-fire", new HttpReFireHelloSender(), true);
     }
 
     @Override

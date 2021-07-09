@@ -12,6 +12,9 @@ import java.util.Set;
 public class Constants {
     public static final String DECODER_ID = "uniporter-decoder";
     public static final String GZIP_HANDLER_ID = "uniporter-http-gzip";
+    public static final String SERVER_HANDLER_ID = "uniporter-http-server-handler";
+    public static final String ROUTED_RESPONSE_HANDLER_ID = "uniporter-http-response";
+    public static final String ROUTED_REQUEST_HANDLER_ID = "uniporter-http-request";
 
     public static final String DEFAULT_TAIL_ID = "DefaultChannelPipeline$TailContext#0";
 

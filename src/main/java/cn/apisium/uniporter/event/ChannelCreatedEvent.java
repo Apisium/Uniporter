@@ -1,7 +1,6 @@
 package cn.apisium.uniporter.event;
 
 import io.netty.channel.Channel;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 /**
@@ -12,8 +11,12 @@ import org.bukkit.event.HandlerList;
  *
  * @author Baleine_2000
  */
-public abstract class ChannelCreatedEvent extends Event {
+public abstract class ChannelCreatedEvent extends ChannelEvent {
     private static final HandlerList handlerList = new HandlerList();
+
+    public ChannelCreatedEvent(Channel channel) {
+        super(channel);
+    }
 
     public static HandlerList getHandlerList() {
         return handlerList;
@@ -24,21 +27,4 @@ public abstract class ChannelCreatedEvent extends Event {
         return handlerList;
     }
 
-    private final Channel channel;
-
-    /**
-     * Get corresponding channel to this event.
-     * <p>
-     * It is possible that the channel already initialized, which will not be the same as original Netty behavior.
-     *
-     * @return The channel that is created.
-     */
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public ChannelCreatedEvent(Channel channel) {
-        super();
-        this.channel = channel;
-    }
 }
