@@ -19,7 +19,7 @@ public class PreRouteFinder extends SimpleChannelInboundHandler<HttpRequest> imp
                 context.fireChannelRead(request);
                 return;
             }
-            handler.hijack(context);
+            handler.hijack(context, request);
             context.channel().pipeline().fireChannelRead(request);
         } catch (Throwable e) {
             IllegalHttpStateException.send(context, e);

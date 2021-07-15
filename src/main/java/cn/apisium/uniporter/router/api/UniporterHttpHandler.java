@@ -2,6 +2,7 @@ package cn.apisium.uniporter.router.api;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpRequest;
 
 /**
  * Handles a http request
@@ -27,6 +28,6 @@ public interface UniporterHttpHandler {
         return false;
     }
 
-    default void hijack(ChannelHandlerContext context) {
+    default void hijack(ChannelHandlerContext context, HttpRequest request) {
     }
 }
