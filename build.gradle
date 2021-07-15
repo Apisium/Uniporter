@@ -61,7 +61,10 @@ shadowJar {
     archiveClassifier.set('')
     minimize()
 }
-jar.enabled = false
+jar {
+    enabled = false
+    dependsOn(shadowJar)
+}
 artifacts {
     shadowJar
 }
