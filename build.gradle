@@ -41,10 +41,9 @@ dependencies {
 }
 
 shadowJar {
-    archiveClassifier.set('')
-    minimize()
     dependencies {
         include(dependency('org.shredzone.acme4j:acme4j:2.12'))
+        include(dependency('org.shredzone.acme4j:acme4j-utils:2.12'))
         include(dependency('org.shredzone.acme4j:acme4j-client:2.12'))
         include(dependency('org.bouncycastle:bcpkix-jdk15on:1.69'))
         include(dependency('org.bouncycastle:bcprov-jdk15on:1.69'))
@@ -57,6 +56,8 @@ shadowJar {
         relocate('org.jose4j', 'cn.apisium.uniporter.libs.org.jose4j')
         relocate('org.bouncycastle', 'cn.apisium.uniporter.libs.org.bouncycastle')
     }
+    archiveClassifier.set('')
+    minimize()
 }
 jar.enabled = false
 artifacts {
