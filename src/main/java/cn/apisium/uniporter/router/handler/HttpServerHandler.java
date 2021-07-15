@@ -9,7 +9,7 @@ import cn.apisium.uniporter.router.api.message.RoutedHttpFullRequest;
 import cn.apisium.uniporter.router.api.message.RoutedHttpRequest;
 import cn.apisium.uniporter.router.api.message.RoutedHttpResponse;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
-import cn.apisium.uniporter.util.PathResolver;
+import cn.apisium.uniporter.router.util.RouteResolver;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -17,23 +17,16 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.bukkit.Bukkit;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.net.URL;
-
 /**
  * Handles raw Http request and try to convert to routed Http request.
  */
-public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
+public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> implements RouteResolver {
     @Override
     protected void channelRead0(ChannelHandlerContext context, FullHttpRequest request) throws Exception {
-        // Only used to get formatted path, not the actual url
-        URL url = new URL(String.format("https://localhost/%s", request.uri()));
-
         // Parse path
         String path;
         try {
-            path = PathResolver.resolvePath(url.getPath().substring(1)).replaceAll("[\\\\]", "/");
+            path = this.findPath(request.uri());
         } catch (IllegalHttpStateException exception) {
             exception.send(context);
             return;
@@ -43,18 +36,8 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         }
 
         try {
-            // Check port and calculate the internal logical port
-            SocketAddress address = context.channel().localAddress();
-            String logicalPort = ":minecraft";
-            int port;
-            if (address instanceof InetSocketAddress
-                    && (port = ((InetSocketAddress) address).getPort()) != Bukkit.getPort()) {
-                logicalPort = ":" + port;
-            }
-
             // Find the route corresponding to this request and calls the handler registered
-            Route route = Uniporter.getRouteConfig()
-                    .findRoute(logicalPort, request.headers().get("Host", ""), path);
+            Route route = this.getRoute(context, request.headers(), path);
             UniporterHttpHandler handler =
                     Uniporter.getRouteConfig()
                             .getHandler(route.getHandler())
