@@ -1,6 +1,7 @@
 package cn.apisium.uniporter;
 
 import cn.apisium.uniporter.acme.Authorizer;
+import cn.apisium.uniporter.example.HttpHijackSender;
 import cn.apisium.uniporter.router.api.Config;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
@@ -191,6 +192,7 @@ public final class Uniporter extends JavaPlugin {
         // Uncomment below to see how example works.
         // Uniporter.registerHandler("helloworld", new HttpHelloSender(), true);
         // Uniporter.registerHandler("helloworld-re-fire", new HttpReFireHelloSender(), true);
+        Uniporter.registerHandler("hijack", new HttpHijackSender(), true);
     }
 
     @Override

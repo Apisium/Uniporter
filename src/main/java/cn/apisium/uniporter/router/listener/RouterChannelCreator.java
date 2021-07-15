@@ -5,6 +5,7 @@ import cn.apisium.uniporter.event.HttpChannelCreatedEvent;
 import cn.apisium.uniporter.event.SSLChannelCreatedEvent;
 import cn.apisium.uniporter.router.ExceptionIgnorer;
 import cn.apisium.uniporter.router.handler.HttpServerHandler;
+import cn.apisium.uniporter.router.handler.PreRouteFinder;
 import cn.apisium.uniporter.router.handler.RoutedHttpRequestHandler;
 import cn.apisium.uniporter.router.handler.RoutedHttpResponseHandler;
 import cn.apisium.uniporter.util.SSLFactory;
@@ -31,9 +32,9 @@ public class RouterChannelCreator implements Listener {
 
         // Set up normal http server
         pipeline.addLast(Constants.DECODER_HANDLER_ID, new HttpRequestDecoder());
-        pipeline.addLast(Constants.PRE_ROUTE_ID, new HttpRequestDecoder());
+        pipeline.addLast(Constants.ENCODER_HANDLER_ID, new HttpResponseEncoder());
+        pipeline.addLast(Constants.PRE_ROUTE_ID, new PreRouteFinder());
         pipeline.addLast(Constants.AGGREGATOR_HANDLER_ID, new HttpObjectAggregator(1024 * 1024));
-        pipeline.addLast(new HttpResponseEncoder());
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(Constants.GZIP_HANDLER_ID, new HttpContentCompressor());
         pipeline.addLast(Constants.SERVER_HANDLER_ID, new HttpServerHandler());
