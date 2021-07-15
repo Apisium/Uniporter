@@ -22,4 +22,11 @@ public interface UniporterHttpHandler {
     default boolean needReFire() {
         return false;
     }
+
+    default boolean hijackAggregator() {
+        return false;
+    }
+
+    default void hijack(ChannelHandlerContext context) {
+    }
 }

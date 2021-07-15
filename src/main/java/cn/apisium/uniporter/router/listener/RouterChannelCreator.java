@@ -30,8 +30,9 @@ public class RouterChannelCreator implements Listener {
         ChannelPipeline pipeline = event.getChannel().pipeline();
 
         // Set up normal http server
-        pipeline.addLast(new HttpRequestDecoder());
-        pipeline.addLast(new HttpObjectAggregator(1024 * 1024));
+        pipeline.addLast(Constants.DECODER_HANDLER_ID, new HttpRequestDecoder());
+        pipeline.addLast(Constants.PRE_ROUTE_ID, new HttpRequestDecoder());
+        pipeline.addLast(Constants.AGGREGATOR_HANDLER_ID, new HttpObjectAggregator(1024 * 1024));
         pipeline.addLast(new HttpResponseEncoder());
         pipeline.addLast(new ChunkedWriteHandler());
         pipeline.addLast(Constants.GZIP_HANDLER_ID, new HttpContentCompressor());

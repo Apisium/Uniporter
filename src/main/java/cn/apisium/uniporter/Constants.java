@@ -15,6 +15,9 @@ public class Constants {
     public static final String SERVER_HANDLER_ID = "uniporter-http-server-handler";
     public static final String ROUTED_RESPONSE_HANDLER_ID = "uniporter-http-response";
     public static final String ROUTED_REQUEST_HANDLER_ID = "uniporter-http-request";
+    public static final String AGGREGATOR_HANDLER_ID = "uniporter-http-aggregator";
+    public static final String DECODER_HANDLER_ID = "uniporter-http-decoder";
+    public static final String PRE_ROUTE_ID = "uniporter-pre-router";
 
     public static final String DEFAULT_TAIL_ID = "DefaultChannelPipeline$TailContext#0";
 
