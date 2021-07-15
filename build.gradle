@@ -51,11 +51,13 @@ shadowJar {
         include(dependency('org.bitbucket.b_c:jose4j:0.7.8'))
         include(dependency('org.slf4j:slf4j-api:1.7.31'))
 
+
         relocate('org.slf4j', 'cn.apisium.uniporter.libs.org.slf4j')
         relocate('org.shredzone', 'cn.apisium.uniporter.libs.org.shredzone')
         relocate('org.jose4j', 'cn.apisium.uniporter.libs.org.jose4j')
         relocate('org.bouncycastle', 'cn.apisium.uniporter.libs.org.bouncycastle')
     }
+    exclude('META-INF/versions/**')
     archiveClassifier.set('')
     minimize()
 }
