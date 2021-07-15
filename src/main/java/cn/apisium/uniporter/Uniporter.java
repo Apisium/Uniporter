@@ -1,5 +1,6 @@
 package cn.apisium.uniporter;
 
+import cn.apisium.uniporter.acme.Authorizer;
 import cn.apisium.uniporter.router.api.Config;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
@@ -152,6 +153,8 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        this.saveDefaultConfig();
+
         instance = this;
         config = new Config(new File(this.getDataFolder(), "route.yml"));
         this.attachChannelHandler();
@@ -162,6 +165,28 @@ public final class Uniporter extends JavaPlugin {
         registerHandler("static", new DefaultStaticHandler());
 
         getLogger().info("Uniporter initialized");
+
+        if (this.getConfig().getBoolean("eula") && this.getConfig().getBoolean("order")) {
+            boolean success = false;
+            int count = 5;
+            while (!success && count > 0) {
+                try {
+                    count--;
+                    new Authorizer(this).order();
+                    success = true;
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (Authorizer.server != null) {
+                Authorizer.server.getFuture().channel().close();
+                Authorizer.server.getFuture().channel().closeFuture().syncUninterruptibly();
+            }
+            getRouteConfig().keyStoreExist = getRouteConfig().getKeyStore().exists();
+            this.getConfig().set("order", false);
+            this.saveConfig();
+        }
 
         // Uncomment below to see how example works.
         // Uniporter.registerHandler("helloworld", new HttpHelloSender(), true);

@@ -40,7 +40,7 @@ public class Config {
 
     final HashMap<String, UniporterHttpHandler> handlers = new HashMap<>(); // All registered http handlers
 
-    boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
+    public boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
     boolean debug; // Is this debug environment
 
     public HashMap<String, HashMap<String, Route>> getRouteCache() {

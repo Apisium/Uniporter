@@ -1,5 +1,8 @@
-apply plugin: 'java'
-apply plugin: 'idea'
+plugins {
+    id 'com.github.johnrengelman.shadow' version '7.0.0'
+    id 'java'
+    id 'idea'
+}
 
 group = 'cn.apisium'
 version = '1.1-SNAPSHOT'
@@ -18,12 +21,34 @@ repositories {
     maven { url "https://oss.sonatype.org/content/groups/public/" }
     maven { url "https://repo.maven.apache.org/maven2" }
 }
+
 dependencies {
+    implementation 'org.shredzone.acme4j:acme4j:2.12'
+    implementation 'org.shredzone.acme4j:acme4j-utils:2.12'
+    // implementation 'org.shredzone.acme4j:acme4j-client:2.12'
+    // implementation 'org.bouncycastle:bcpkix-jdk15on:1.69'
+
+
     compileOnly 'io.netty:netty-all:4.1.65.Final'
     compileOnly 'org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT'
-    compileOnly ('org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT')  {
+    compileOnly('org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT') {
         exclude group: 'org.bukkit'
     }
 
     annotationProcessor 'org.spigotmc:plugin-annotations:1.2.3-SNAPSHOT'
+}
+
+shadowJar {
+    dependencies {
+        include(dependency('org.shredzone.acme4j:acme4j:2.12'))
+        include(dependency('org.shredzone.acme4j:acme4j-utils:2.12'))
+        include(dependency('org.shredzone.acme4j:acme4j-client:2.12'))
+        include(dependency('org.bouncycastle:bcpkix-jdk15on:1.69'))
+        include(dependency('org.bouncycastle:bcprov-jdk15on:1.69'))
+        include(dependency('org.bouncycastle:bcutil-jdk15on:1.69'))
+        include(dependency('org.bitbucket.b_c:jose4j:0.7.8'))
+
+
+
+    }
 }

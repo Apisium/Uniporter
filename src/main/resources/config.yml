@@ -1,0 +1,13 @@
+# Agree ACME eula
+eula: false
+# Do you want to do the order?
+# This will temporarily open your port 80 for ACME challenge.
+# If order failed, SSL will be turned off for minecraft port.
+order: false
+# Email
+email: example@example.com
+# Organization name
+organization: Uniporter User
+# Domain names
+domains:
+  - example.com
