@@ -192,7 +192,7 @@ public final class Uniporter extends JavaPlugin {
         // Uncomment below to see how example works.
         // Uniporter.registerHandler("helloworld", new HttpHelloSender(), true);
         // Uniporter.registerHandler("helloworld-re-fire", new HttpReFireHelloSender(), true);
-        Uniporter.registerHandler("hijack", new HttpHijackSender(), true);
+        // Uniporter.registerHandler("hijack", new HttpHijackSender(), true);
     }
 
     @Override
