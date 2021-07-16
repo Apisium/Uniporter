@@ -18,10 +18,6 @@ public class PreRouteFinder extends SimpleChannelInboundHandler<HttpRequest> imp
 
             try {
                 route = this.getRoute(context, request.headers(), findPath(request.uri()));
-                if (route == null) {
-                    context.fireChannelRead(request);
-                    return;
-                }
                 handler = Uniporter.getRouteConfig().getHandler(route.getHandler()).orElse(null);
             } catch (Throwable ignore) {
             }
