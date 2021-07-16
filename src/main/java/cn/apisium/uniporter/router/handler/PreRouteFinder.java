@@ -21,11 +21,10 @@ public class PreRouteFinder extends SimpleChannelInboundHandler<HttpRequest> imp
             Route route;
             UniporterHttpHandler handler = null;
 
-
             if (context.channel().pipeline().names().contains(Constants.PRE_ROUTE_ID)) {
                 context.channel().pipeline().remove(Constants.PRE_ROUTE_ID);
             }
-            
+
             try {
                 route = this.getRoute(context, request.headers(), findPath(request.uri()));
                 handler = Uniporter.getRouteConfig().getHandler(route.getHandler()).orElse(null);
