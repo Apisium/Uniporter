@@ -10,6 +10,10 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.HttpRequest;
 
 public class PreRouteFinder extends SimpleChannelInboundHandler<HttpRequest> implements RouteResolver {
+    public PreRouteFinder() {
+        super(false);
+    }
+
     @Override
     protected void channelRead0(ChannelHandlerContext context, HttpRequest request) throws Exception {
         try {
