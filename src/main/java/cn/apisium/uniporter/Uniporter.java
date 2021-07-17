@@ -7,11 +7,13 @@ import cn.apisium.uniporter.router.api.UniporterHttpHandler;
 import cn.apisium.uniporter.router.defaults.DefaultStaticHandler;
 import cn.apisium.uniporter.router.listener.RouterChannelCreator;
 import cn.apisium.uniporter.util.ReflectionFinder;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.*;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginLoadOrder;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -121,6 +123,15 @@ public final class Uniporter extends JavaPlugin {
         Decoder.clearHandler(context);
     }
 
+    public static void send(ChannelHandlerContext context, String mime, byte[] data) {
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HttpVersion.HTTP_1_1,
+                HttpResponseStatus.OK,
+                Unpooled.copiedBuffer(data));
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
+        context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    }
+
     /**
      * Attach channel handler to Minecraft
      */
@@ -192,6 +203,7 @@ public final class Uniporter extends JavaPlugin {
         // Uniporter.registerHandler("helloworld", new HttpHelloSender(), true);
         // Uniporter.registerHandler("helloworld-re-fire", new HttpReFireHelloSender(), true);
         // Uniporter.registerHandler("hijack", new HttpHijackSender(), true);
+        // Uniporter.registerHandler("mix", new HttpHijackMixedSender(), true);
     }
 
     @Override
