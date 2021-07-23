@@ -96,7 +96,7 @@ public class Config {
         // Create default config if not exist
         if (!file.exists()) {
             try {
-                if (file.getParentFile().mkdirs() && file.createNewFile()) {
+                if ((file.getParentFile().exists() || file.getParentFile().mkdirs()) && file.createNewFile()) {
                     InputStream defaultConfig = Objects.requireNonNull(
                             this.getClass().getClassLoader().getResourceAsStream("route.yml"));
                     byte[] contents = new byte[defaultConfig.available()];
