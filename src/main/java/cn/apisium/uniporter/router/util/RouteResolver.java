@@ -13,7 +13,7 @@ import java.net.SocketAddress;
 import java.net.URL;
 
 public interface RouteResolver {
-    default Route getRoute(ChannelHandlerContext context, HttpHeaders headers, String path){
+    default Route getRoute(ChannelHandlerContext context, HttpHeaders headers, String path) {
         // Check port and calculate the internal logical port
         SocketAddress address = context.channel().localAddress();
         String logicalPort = ":minecraft";
@@ -28,14 +28,16 @@ public interface RouteResolver {
 
     default String findPath(String uri) {
         try {
-            return findPath(new URL(String.format("https://localhost/%s", uri)));
+            return findPath(new URL(String.format("https://localhost/%s", uri.startsWith("/") ? uri
+                    .substring(1) : uri)));
         } catch (MalformedURLException e) {
             // Impossible
             e.printStackTrace();
         }
         return "";
     }
-    default String findPath(URL url){
+
+    default String findPath(URL url) {
         return PathResolver.resolvePath(url.getPath().substring(1)).replaceAll("[\\\\]", "/");
     }
 }
