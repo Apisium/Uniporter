@@ -21,7 +21,7 @@ jobs:
           java-version: '8'
           distribution: 'adopt'
       - name: Set version env
-        run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}
+        run: echo "RELEASE_VERSION=${GITHUB_REF:10}" >> $GITHUB_ENV
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
