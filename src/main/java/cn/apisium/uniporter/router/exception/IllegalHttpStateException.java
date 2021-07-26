@@ -103,6 +103,10 @@ public class IllegalHttpStateException extends IllegalArgumentException {
     public static void send(ChannelHandlerContext context, Throwable cause) {
         send(context, HttpResponseStatus.INTERNAL_SERVER_ERROR, Uniporter.isDebug() ? cause.getMessage() :
                 "Internal Server Error");
+        if (Uniporter.isDebug()) {
+            cause.printStackTrace();
+        }
+
     }
 
     /**

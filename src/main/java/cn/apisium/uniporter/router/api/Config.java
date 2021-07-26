@@ -39,6 +39,7 @@ public class Config {
     // All servers with ports other than :minecraft, key is its port
 
     final HashMap<String, UniporterHttpHandler> handlers = new HashMap<>(); // All registered http handlers
+    final HashMap<String, Set<Integer>> extraPorts = new HashMap<>();
 
     public boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
     boolean debug; // Is this debug environment
@@ -225,17 +226,22 @@ public class Config {
                         .computeIfAbsent(route.getPath(), (key) -> new HashSet<>());
         portedRoutes.add(route);
 
+        Set<Integer> ports = extraPorts.compute(route.handler, (k, v) -> v == null ? new HashSet<>() : v);
         // If the route listen to port other than minecraft port, create corresponding server
         if (!logicalPort.equalsIgnoreCase(":minecraft")) {
             try {
                 int port = Integer.parseInt(logicalPort.substring(1));
-                if (Bukkit.getPort() != port)
+                if (Bukkit.getPort() != port) {
                     additionalServers.computeIfAbsent(logicalPort, (key) -> ssl && isKeyStoreExist() ?
                             new SimpleHttpsServer(port) :
                             new SimpleHttpServer(port));
+                }
+                ports.add(port);
             } catch (Throwable ignore) {
                 // No error should happen here, otherwise it is intended
             }
+        } else {
+            ports.add(Bukkit.getPort());
         }
 
     }
@@ -295,5 +301,9 @@ public class Config {
                 .max(Comparator.comparingInt((route) -> route.path.length()))
                 // Throws error if nothing is found
                 .orElseThrow(() -> new IllegalHttpStateException(HttpResponseStatus.NOT_FOUND)));
+    }
+
+    public Set<Integer> findPortsByHandler(String handler) {
+        return extraPorts.getOrDefault(handler, Collections.emptySet());
     }
 }

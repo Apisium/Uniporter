@@ -23,13 +23,14 @@ import org.bukkit.plugin.java.annotation.plugin.author.Author;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Uniporter plugin class, also contains some API methods.
  *
  * @author Baleine_2000
  */
-@Plugin(name = "Uniporter", version = "1.2.2")
+@Plugin(name = "Uniporter", version = "1.2.3")
 @Description("A netty wrapper for Minecraft, which allows running multiple protocols in same port.")
 @Author("Baleine_2000")
 @LoadOrder(PluginLoadOrder.STARTUP)
@@ -130,6 +131,10 @@ public final class Uniporter extends JavaPlugin {
                 Unpooled.copiedBuffer(data));
         response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
         context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
+    }
+
+    public Set<Integer> findPortsByHandler(String handler) {
+        return getRouteConfig().findPortsByHandler(handler);
     }
 
     /**

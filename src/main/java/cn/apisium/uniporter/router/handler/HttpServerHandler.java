@@ -70,11 +70,12 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
             }
         } catch (IllegalHttpStateException exception) {
             // This means router is not found, so send that
-            exception.printStackTrace();
+            if (Uniporter.isDebug()) {
+                exception.printStackTrace();
+            }
             sendNoRouter(path, context);
         } catch (Throwable e) {
             // This is an unexpected error, should not happened
-            e.printStackTrace();
             IllegalHttpStateException.send(context, e);
         }
     }
