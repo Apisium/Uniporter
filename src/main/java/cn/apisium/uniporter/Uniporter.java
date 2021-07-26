@@ -137,6 +137,10 @@ public final class Uniporter extends JavaPlugin {
         return getRouteConfig().findPortsByHandler(handler);
     }
 
+    public static Set<Route> findRoutesByHandler(String handler) {
+        return getRouteConfig().findRoutesByHandler(handler);
+    }
+
     /**
      * Attach channel handler to Minecraft
      */
