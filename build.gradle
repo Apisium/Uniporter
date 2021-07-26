@@ -5,9 +5,10 @@ plugins {
 }
 
 group = 'cn.apisium'
-version = '1.2.3-SNAPSHOT'
+version = System.properties['GITHUB_REF'] ?: "0.0.0-DEV"
+def pluginVersion = version
 
-description = """Uniporter"""
+description = "A netty wrapper for Minecraft, which allows running multiple protocols in same port."
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -60,6 +61,11 @@ shadowJar {
     exclude('META-INF/versions/**')
     archiveClassifier.set('')
     minimize()
+    filesMatching('plugin.yml') {
+        filter {
+            it.replaceAll('@@RELEASE_VERSION@@', pluginVersion)
+        }
+    }
 }
 jar {
     enabled = false
