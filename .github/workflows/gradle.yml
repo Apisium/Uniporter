@@ -25,9 +25,8 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - name: Upload binaries to release
-      uses: svenstaro/upload-release-action@2.2.1
+      uses: Shopify/upload-to-release@v1.0.1
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: build/libs/Uniporter*
-        tag: ${{ github.ref }}
-        file_glob: true
+        name: Uniporter-${{ github.ref }}.jar
+        path: build/libs/Uniporter-${{ github.ref }}.jar
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
