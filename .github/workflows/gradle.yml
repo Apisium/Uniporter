@@ -30,5 +30,4 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: build/libs/Uniporter*
         tag: ${{ github.ref }}
-        overwrite: true
         file_glob: true
