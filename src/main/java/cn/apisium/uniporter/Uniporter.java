@@ -133,7 +133,7 @@ public final class Uniporter extends JavaPlugin {
         context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
-    public Set<Integer> findPortsByHandler(String handler) {
+    public static Set<Integer> findPortsByHandler(String handler) {
         return getRouteConfig().findPortsByHandler(handler);
     }
 
