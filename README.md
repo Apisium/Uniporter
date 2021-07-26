@@ -1,5 +1,8 @@
 # Uniporter
 
+[![Build Release](https://github.com/Apisium/Uniporter/actions/workflows/gradle.yml/badge.svg)](https://github.com/Apisium/Uniporter/actions/workflows/gradle.yml)
+[![JitPack](https://jitpack.io/v/Apisium/Uniporter.svg)](https://jitpack.io/#Apisium/Uniporter)
+
 A netty wrapper for Minecraft, which allows running multiple protocols in same port.
 
 Currently, works for HTTP/1.1 standards and regular SSL, more protocols will be added later on.
