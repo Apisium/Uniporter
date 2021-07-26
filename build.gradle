@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'cn.apisium'
-version = System.getenv('GITHUB_REF') ?: "0.0.0-DEV"
+version = System.getenv('RELEASE_VERSION') ?: "0.0.0-DEV"
 def pluginVersion = version
 
 description = "A netty wrapper for Minecraft, which allows running multiple protocols in same port."
