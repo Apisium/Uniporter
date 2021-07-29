@@ -41,6 +41,7 @@ public class Config {
     final HashMap<String, UniporterHttpHandler> handlers = new HashMap<>(); // All registered http handlers
     final HashMap<String, Set<Integer>> extraPorts = new HashMap<>();
     final HashMap<String, Set<Route>> handlerToRoute = new HashMap<>();
+    final HashSet<Integer> sslPorts = new HashSet<>();
 
     public boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
     boolean debug; // Is this debug environment
@@ -234,9 +235,14 @@ public class Config {
             try {
                 int port = Integer.parseInt(logicalPort.substring(1));
                 if (Bukkit.getPort() != port) {
-                    additionalServers.computeIfAbsent(logicalPort, (key) -> ssl && isKeyStoreExist() ?
-                            new SimpleHttpsServer(port) :
-                            new SimpleHttpServer(port));
+                    additionalServers.computeIfAbsent(logicalPort, (key) -> {
+                        if (ssl && isKeyStoreExist()) {
+                            sslPorts.add(port);
+                            return new SimpleHttpsServer(port);
+                        } else {
+                            return new SimpleHttpServer(port);
+                        }
+                    });
                 }
                 ports.add(port);
             } catch (Throwable ignore) {
@@ -311,5 +317,16 @@ public class Config {
 
     public Set<Route> findRoutesByHandler(String handler) {
         return handlerToRoute.get(handler);
+    }
+
+    /**
+     * Check if a port is ssl enabled or not. Note that by default, minecraft port supports both, however, this
+     * method returns false if the port is the same as minecraft port.
+     *
+     * @param port the port that need to be checked
+     * @return if the port is a ssl-only port
+     */
+    public boolean isSSLPort(int port) {
+        return sslPorts.contains(port);
     }
 }

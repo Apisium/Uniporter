@@ -142,6 +142,17 @@ public final class Uniporter extends JavaPlugin {
     }
 
     /**
+     * Check if a port is ssl enabled or not. Note that by default, minecraft port supports both, however, this
+     * method returns false if the port is the same as minecraft port.
+     *
+     * @param port the port that need to be checked
+     * @return if the port is a ssl-only port
+     */
+    public static boolean isSSLPort(int port) {
+        return getRouteConfig().isSSLPort(port);
+    }
+
+    /**
      * Attach channel handler to Minecraft
      */
     private void attachChannelHandler() {
