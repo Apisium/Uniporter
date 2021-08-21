@@ -16,7 +16,7 @@ public class PreRouteFinder extends SimpleChannelInboundHandler<HttpRequest> imp
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext context, HttpRequest request) throws Exception {
+    protected void channelRead0(ChannelHandlerContext context, HttpRequest request) {
         try {
             Route route;
             UniporterHttpHandler handler = null;

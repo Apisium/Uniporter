@@ -3,6 +3,7 @@ package cn.apisium.uniporter.util;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
@@ -10,6 +11,7 @@ import java.util.regex.Pattern;
  * Translated from https://github.com/pillarjs/resolve-path/blob/master/index.js#L45
  */
 public class PathResolver {
+    private static final Path ROOT = Paths.get("/");
     private static final Pattern UP_PATH_REGEXP = Pattern.compile("(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)");
 
     /**
@@ -20,7 +22,6 @@ public class PathResolver {
      * @throws IllegalHttpStateException if path is not "good"
      */
     public static String resolvePath(String relativePath) throws IllegalHttpStateException {
-        String root = "/";
         String sep = "/";
 
         // containing NULL bytes is malicious
@@ -39,6 +40,6 @@ public class PathResolver {
         }
 
         // join the relative path
-        return Paths.get(root).resolve(relativePath).normalize().toString();
+        return ROOT.resolve(relativePath).normalize().toString();
     }
 }

@@ -175,20 +175,20 @@ public final class Uniporter extends JavaPlugin {
     /**
      * Attach channel handler to Minecraft
      */
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
     private void attachChannelHandler() {
         try {
-            ChannelInboundHandlerAdapter handler = new ChannelInboundHandlerAdapter() {
-                @Override
-                public void channelRead(ChannelHandlerContext ctx, Object msg) {
-                    Channel channel = (Channel) msg;
-                    if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
-                        channel.pipeline().addFirst(Constants.DECODER_ID, new Decoder());
-                    }
-                    ctx.fireChannelRead(msg);
-                }
-            };
-            findBoostrapChannelFutures().forEach(future -> future.channel().pipeline()
-                    .addFirst(Constants.UNIPORTER_ID, handler));
+            findBoostrapChannelFutures().findFirst().get().channel().pipeline()
+                    .addFirst(Constants.UNIPORTER_ID, new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                            Channel channel = (Channel) msg;
+                            if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
+                                channel.pipeline().addFirst(Constants.DECODER_ID, new Decoder());
+                            }
+                            ctx.fireChannelRead(msg);
+                        }
+                    });
         } catch (Throwable e) {
             e.printStackTrace();
             getLogger().info("Failed to attach channel.");
@@ -249,7 +249,11 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        findBoostrapChannelFutures().forEach(future -> future.channel().pipeline().remove(Constants.UNIPORTER_ID));
+        findBoostrapChannelFutures().forEach(future -> {
+            if (future.channel().pipeline().get(Constants.UNIPORTER_ID) != null) {
+                future.channel().pipeline().remove(Constants.UNIPORTER_ID);
+            }
+        });
         // Close all previous opened servers
         getRouteConfig().getAdditionalServers().values().forEach(server -> {
             server.getFuture().addListener(ChannelFutureListener.CLOSE);

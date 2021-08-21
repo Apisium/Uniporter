@@ -13,7 +13,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
  */
 public class RoutedHttpRequestHandler extends SimpleChannelInboundHandler<RoutedHttpRequest> {
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, RoutedHttpRequest msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext ctx, RoutedHttpRequest msg) {
         msg.getHandler().handle(msg.getPath(), msg.getRoute(), ctx, msg.getRequest());
     }
 }

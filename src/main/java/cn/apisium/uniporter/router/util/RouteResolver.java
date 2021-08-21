@@ -5,12 +5,11 @@ import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.util.PathResolver;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.QueryStringDecoder;
 import org.bukkit.Bukkit;
 
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.SocketAddress;
-import java.net.URL;
 
 public interface RouteResolver {
     default Route getRoute(ChannelHandlerContext context, HttpHeaders headers, String path) {
@@ -27,17 +26,7 @@ public interface RouteResolver {
     }
 
     default String findPath(String uri) {
-        try {
-            return findPath(new URL(String.format("https://localhost/%s", uri.startsWith("/") ? uri
-                    .substring(1) : uri)));
-        } catch (MalformedURLException e) {
-            // Impossible
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    default String findPath(URL url) {
-        return PathResolver.resolvePath(url.getPath().substring(1)).replaceAll("[\\\\]", "/");
+        return PathResolver.resolvePath(new QueryStringDecoder(uri).path())
+                .replace("\\", "/");
     }
 }
