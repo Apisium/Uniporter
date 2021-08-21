@@ -9,7 +9,6 @@ import cn.apisium.uniporter.router.listener.RouterChannelCreator;
 import cn.apisium.uniporter.util.ReflectionFinder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -26,6 +25,7 @@ import org.bukkit.plugin.java.annotation.plugin.author.Author;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Uniporter plugin class, also contains some API methods.
@@ -40,6 +40,7 @@ import java.util.*;
 @ApiVersion(ApiVersion.Target.v1_13)
 @Commands(@Command(name = "uniporter", permission = "uniporter.use", usage = "/uniporter"))
 @Permissions(@Permission(name = "uniporter.use"))
+@SoftDependency("ProtocolLib")
 public final class Uniporter extends JavaPlugin {
     private static final String PREFIX = ChatColor.YELLOW + "[Uniporter] ";
     private static Uniporter instance;
@@ -163,12 +164,12 @@ public final class Uniporter extends JavaPlugin {
         return getRouteConfig().isSSLPort(port);
     }
 
-    private static ChannelFuture findBoostrapChannelFuture() {
+    private static Stream<ChannelFuture> findBoostrapChannelFutures() {
         List<?> futures = ReflectionFinder.findChannelFutures();
         assert futures != null;
         return futures.stream()
                 .filter(f -> f instanceof ChannelFuture)
-                .map(f -> (ChannelFuture) f).findFirst().orElse(null);
+                .map(f -> (ChannelFuture) f);
     }
 
     /**
@@ -176,23 +177,18 @@ public final class Uniporter extends JavaPlugin {
      */
     private void attachChannelHandler() {
         try {
-            ChannelFuture future = findBoostrapChannelFuture();
-            if (future != null) {
-                future.channel().pipeline().addFirst(Constants.UNIPORTER_ID, new ChannelInboundHandlerAdapter() {
-                    @Override
-                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                        if (msg instanceof NioSocketChannel) {
-                            NioSocketChannel channel = (NioSocketChannel) msg;
-                            if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
-                                channel.pipeline().addFirst(Constants.DECODER_ID, new Decoder());
-                            }
-                            super.channelRead(ctx, channel);
-                        } else {
-                            super.channelRead(ctx, msg);
-                        }
+            ChannelInboundHandlerAdapter handler = new ChannelInboundHandlerAdapter() {
+                @Override
+                public void channelRead(ChannelHandlerContext ctx, Object msg) {
+                    Channel channel = (Channel) msg;
+                    if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
+                        channel.pipeline().addFirst(Constants.DECODER_ID, new Decoder());
                     }
-                });
-            }
+                    ctx.fireChannelRead(msg);
+                }
+            };
+            findBoostrapChannelFutures().forEach(future -> future.channel().pipeline()
+                    .addFirst(Constants.UNIPORTER_ID, handler));
         } catch (Throwable e) {
             e.printStackTrace();
             getLogger().info("Failed to attach channel.");
@@ -253,10 +249,7 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        ChannelFuture future = findBoostrapChannelFuture();
-        if (future != null) {
-            future.channel().pipeline().remove(Constants.UNIPORTER_ID);
-        }
+        findBoostrapChannelFutures().forEach(future -> future.channel().pipeline().remove(Constants.UNIPORTER_ID));
         // Close all previous opened servers
         getRouteConfig().getAdditionalServers().values().forEach(server -> {
             server.getFuture().addListener(ChannelFutureListener.CLOSE);
@@ -282,21 +275,18 @@ public final class Uniporter extends JavaPlugin {
             case "reload":
                 reload();
                 sender.sendMessage(PREFIX + ChatColor.GREEN + "Success!");
-                break;
+                return true;
             case "debug": {
                 boolean value = !isDebug();
                 getRouteConfig().setDebug(value);
                 sender.sendMessage(PREFIX + ChatColor.GRAY + "Current is: " + formatBoolean(value));
-                break;
+                return true;
             }
             case "channels":
                 sender.sendMessage(PREFIX + ChatColor.GRAY + "Channels:");
-                List<?> futures = ReflectionFinder.findChannelFutures();
-                assert futures != null;
-                futures.stream()
-                        .filter(f -> f instanceof ChannelFuture)
-                        .map(f -> ((ChannelFuture) f).channel())
-                        .forEach(channel -> {
+                findBoostrapChannelFutures()
+                        .forEach(future -> {
+                            Channel channel = future.channel();
                             sender.sendMessage(channel.id().asShortText() + ":");
                             sender.sendMessage(ChatColor.GRAY + "  Active: " + formatBoolean(channel.isActive()));
                             sender.sendMessage(ChatColor.GRAY + "  Open: " + formatBoolean(channel.isOpen()));
@@ -308,8 +298,9 @@ public final class Uniporter extends JavaPlugin {
                             channel.pipeline().forEach(it -> sender.sendMessage("    " + it.getKey() + ": " +
                                     ChatColor.GRAY + it.getValue().getClass().getName()));
                         });
+                return true;
+            default: return false;
         }
-        return false;
     }
 
     @Override
