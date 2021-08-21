@@ -11,7 +11,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
@@ -39,7 +38,7 @@ import java.util.*;
 @LoadOrder(PluginLoadOrder.STARTUP)
 @Website("https://apisium.cn")
 @ApiVersion(ApiVersion.Target.v1_13)
-@Commands(@Command(name = "uniporter", permission = "uniporter.use"))
+@Commands(@Command(name = "uniporter", permission = "uniporter.use", usage = "/uniporter"))
 @Permissions(@Permission(name = "uniporter.use"))
 @SoftDependency("ProtocolLib")
 public final class Uniporter extends JavaPlugin {
@@ -84,6 +83,7 @@ public final class Uniporter extends JavaPlugin {
      * @param ssl   use ssl or not
      * @param route the route need to be registered
      */
+    @SuppressWarnings("unused")
     public static void registerRoute(int port, boolean ssl, Route route) {
         getRouteConfig().registerRoute(":" + port, ssl, route);
     }
@@ -118,6 +118,7 @@ public final class Uniporter extends JavaPlugin {
      *
      * @param id the unique handler id
      */
+    @SuppressWarnings("unused")
     public static void removeHandler(String id) {
         getRouteConfig().removeHandler(id);
     }
@@ -127,6 +128,7 @@ public final class Uniporter extends JavaPlugin {
      *
      * @param context current Netty context
      */
+    @SuppressWarnings("unused")
     public static void clearNettyHandler(ChannelHandlerContext context) {
         Decoder.clearHandler(context);
     }
@@ -140,10 +142,12 @@ public final class Uniporter extends JavaPlugin {
         context.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
     }
 
+    @SuppressWarnings("unused")
     public static Set<Integer> findPortsByHandler(String handler) {
         return getRouteConfig().findPortsByHandler(handler);
     }
 
+    @SuppressWarnings("unused")
     public static Set<Route> findRoutesByHandler(String handler) {
         return getRouteConfig().findRoutesByHandler(handler);
     }
@@ -155,6 +159,7 @@ public final class Uniporter extends JavaPlugin {
      * @param port the port that need to be checked
      * @return if the port is a ssl-only port
      */
+    @SuppressWarnings("unused")
     public static boolean isSSLPort(int port) {
         return getRouteConfig().isSSLPort(port);
     }
@@ -205,12 +210,13 @@ public final class Uniporter extends JavaPlugin {
 
         instance = this;
         config = new Config(new File(this.getDataFolder(), "route.yml"));
-        this.attachChannelHandler();
 
-        Bukkit.getPluginManager().registerEvents(new RouterChannelCreator(), this);
+        getServer().getPluginManager().registerEvents(new RouterChannelCreator(), this);
 
         // Register default static handler
         registerHandler("static", new DefaultStaticHandler());
+
+        getServer().getScheduler().runTask(this, this::attachChannelHandler);
 
         PluginCommand command = getServer().getPluginCommand("uniporter");
         assert command != null;
@@ -265,6 +271,13 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage(PREFIX + ChatColor.GRAY + "Version: " + ChatColor.WHITE + getDescription().getVersion());
+            sender.sendMessage(ChatColor.AQUA + "/uniporter reload");
+            sender.sendMessage(ChatColor.AQUA + "/uniporter debug");
+            sender.sendMessage(ChatColor.AQUA + "/uniporter channels");
+            return true;
+        }
         if (args.length != 1) return false;
         switch (args[0]) {
             case "reload":

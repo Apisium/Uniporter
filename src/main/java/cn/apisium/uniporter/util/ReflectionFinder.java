@@ -48,11 +48,11 @@ public class ReflectionFinder {
     }
 
     private static Method getServerMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
-        return clazz.getDeclaredMethod("getServer");
+        return clazz.getMethod("getServer");
     }
 
     private static Method getServerConnectionMethodFromClass(Class<?> clazz) throws NoSuchMethodException {
-        return clazz.getDeclaredMethod("getServerConnection");
+        return clazz.getMethod("getServerConnection");
     }
 
     private static Object getServerConnection() {
