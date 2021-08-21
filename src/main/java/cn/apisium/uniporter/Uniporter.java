@@ -45,6 +45,7 @@ public final class Uniporter extends JavaPlugin {
     private static final String PREFIX = ChatColor.YELLOW + "[Uniporter] ";
     private static Uniporter instance;
     private static Config config;
+    private static boolean debug; // Is this debug environment
 
     /**
      * @return Plugin's instance
@@ -64,7 +65,7 @@ public final class Uniporter extends JavaPlugin {
      * @return is in debug environment
      */
     public static boolean isDebug() {
-        return getRouteConfig().isDebug();
+        return debug;
     }
 
     /**
@@ -196,7 +197,9 @@ public final class Uniporter extends JavaPlugin {
     }
 
     private void reload() {
-        // TODO: reload
+        reloadConfig();
+        debug = this.getConfig().getBoolean("debug", false);
+        config = new Config(new File(this.getDataFolder(), "route.yml"));
     }
 
     @Override
@@ -205,6 +208,7 @@ public final class Uniporter extends JavaPlugin {
 
         instance = this;
         config = new Config(new File(this.getDataFolder(), "route.yml"));
+        debug = this.getConfig().getBoolean("debug", false);
 
         getServer().getPluginManager().registerEvents(new RouterChannelCreator(), this);
 
@@ -280,12 +284,18 @@ public final class Uniporter extends JavaPlugin {
                 reload();
                 sender.sendMessage(PREFIX + ChatColor.GREEN + "Success!");
                 return true;
-            case "debug": {
-                boolean value = !isDebug();
-                getRouteConfig().setDebug(value);
-                sender.sendMessage(PREFIX + ChatColor.GRAY + "Current is: " + formatBoolean(value));
+            case "debug":
+                sender.sendMessage(PREFIX + ChatColor.GRAY + "Current is: " + formatBoolean((debug = !debug)));
                 return true;
-            }
+            case "handlers":
+                sender.sendMessage(PREFIX + ChatColor.GRAY + "Handlers:");
+                getRouteConfig().getHandlers().forEach((k, v) -> {
+                    sender.sendMessage("  " + k + ": " + ChatColor.GRAY + v.getClass().getName());
+                    sender.sendMessage(ChatColor.GRAY + "    Need re-fire: " + formatBoolean(v.needReFire()));
+                    sender.sendMessage(ChatColor.GRAY + "    Hijack Aggregator: " +
+                            formatBoolean(v.hijackAggregator()));
+                });
+                return true;
             case "channels":
                 sender.sendMessage(PREFIX + ChatColor.GRAY + "Channels:");
                 findBoostrapChannelFutures()
@@ -308,7 +318,8 @@ public final class Uniporter extends JavaPlugin {
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String alias, String[] args) {
-        return args.length == 1 ? Arrays.asList("reload", "debug", "channels") : Collections.emptyList();
+    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command,
+                                      String alias, String[] args) {
+        return args.length == 1 ? Arrays.asList("channels", "debug", "handlers", "reload") : Collections.emptyList();
     }
 }

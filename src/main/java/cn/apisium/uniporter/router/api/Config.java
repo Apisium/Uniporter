@@ -44,7 +44,6 @@ public class Config {
     final HashSet<Integer> sslPorts = new HashSet<>();
 
     public boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
-    private boolean debug; // Is this debug environment
 
     @SuppressWarnings("unused")
     public HashMap<String, HashMap<String, Route>> getRouteCache() {
@@ -89,14 +88,6 @@ public class Config {
         return handlers;
     }
 
-    public boolean isDebug() {
-        return debug;
-    }
-
-    public void setDebug(boolean debug) {
-        this.debug = debug;
-    }
-
     /**
      * Load configuration from given file.
      *
@@ -121,8 +112,6 @@ public class Config {
             }
         }
         section = YamlConfiguration.loadConfiguration(file);
-
-        debug = section.getBoolean("debug", false);
 
         indexes = section.getStringList("indexes");
         if (indexes.isEmpty()) {
