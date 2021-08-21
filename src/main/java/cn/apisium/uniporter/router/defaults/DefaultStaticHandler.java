@@ -1,18 +1,22 @@
 package cn.apisium.uniporter.router.defaults;
 
+import cn.apisium.uniporter.Constants;
 import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.router.api.Route;
 import cn.apisium.uniporter.router.api.UniporterHttpHandler;
-import cn.apisium.uniporter.router.api.message.RoutedHttpResponse;
 import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import cn.apisium.uniporter.util.PathResolver;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.DefaultFileRegion;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.stream.ChunkedFile;
+import io.netty.util.concurrent.Future;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -58,20 +62,48 @@ public class DefaultStaticHandler implements UniporterHttpHandler {
         } else {
             try {
                 // Create the response
-                FullHttpResponse response = new DefaultFullHttpResponse(
-                        HttpVersion.HTTP_1_1,
-                        HttpResponseStatus.OK,
-                        Unpooled.copiedBuffer(Files.readAllBytes(target)));
+                HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+                RandomAccessFile raf = new RandomAccessFile(file, "r");
+
                 // Correct its MIME
                 String mime = Files.probeContentType(target);
                 if (mime.equalsIgnoreCase("text/html")) {
                     mime += "; charset=UTF-8";
                 }
+
+                long length = raf.length();
+                HttpUtil.setContentLength(response, length);
                 response.headers().set(HttpHeaderNames.CONTENT_TYPE, mime);
-                // Write and close the connection, okay, I know it is not suitable for download large file.
-                // PR welcome :)
-                context.writeAndFlush(new RoutedHttpResponse(path, response, route))
-                        .addListener(ChannelFutureListener.CLOSE);
+
+                final boolean keepAlive = HttpUtil.isKeepAlive(request);
+                if (!keepAlive) {
+                    response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+                } else if (request.protocolVersion().equals(HttpVersion.HTTP_1_0)) {
+                    response.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                }
+
+                context.write(response);
+
+                Future<Void> future;
+                if (context.pipeline().get(SslHandler.class) == null) {
+                    if (context.pipeline().get(HttpContentCompressor.class) != null) {
+                        context.pipeline().remove(HttpContentCompressor.class);
+                    }
+                    context.write(new DefaultFileRegion(raf.getChannel(), 0, length),
+                            context.newProgressivePromise());
+                    future = context.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+                } else {
+                    if (context.pipeline().get(HttpContentCompressor.class) != null) {
+                        context.pipeline().replace(HttpContentCompressor.class, Constants.GZIP_HANDLER_ID,
+                                new HttpChunkedContentCompressor());
+                    }
+                    future = context.writeAndFlush(new HttpChunkedInput(new ChunkedFile(raf, 0, length, 8192)),
+                            context.newProgressivePromise());
+                }
+
+                if (!keepAlive) {
+                    future.addListener(ChannelFutureListener.CLOSE);
+                }
             } catch (IOException e) {
                 // If error occurs, send a 500 error
                 IllegalHttpStateException.send(context, e);

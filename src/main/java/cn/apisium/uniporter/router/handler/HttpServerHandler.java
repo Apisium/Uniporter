@@ -22,7 +22,7 @@ import org.bukkit.Bukkit;
  */
 public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> implements RouteResolver {
     @Override
-    protected void channelRead0(ChannelHandlerContext context, FullHttpRequest request) throws Exception {
+    protected void channelRead0(ChannelHandlerContext context, FullHttpRequest request) {
         // Parse path
         String path;
         try {
@@ -87,7 +87,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
      * @param context current request context
      */
     private static void sendNoRouter(String path, ChannelHandlerContext context) {
-        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("没有找到对应的路由。<br>%s",
+        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("No such route:<br>%s",
                 path));
     }
 }

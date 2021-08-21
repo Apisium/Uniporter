@@ -10,6 +10,7 @@ import java.util.Set;
  * @author Baleine_2000
  */
 public class Constants {
+    public static final String UNIPORTER_ID = "uniporter-global";
     public static final String DECODER_ID = "uniporter-decoder";
     public static final String GZIP_HANDLER_ID = "uniporter-http-gzip";
     public static final String SERVER_HANDLER_ID = "uniporter-http-server-handler";

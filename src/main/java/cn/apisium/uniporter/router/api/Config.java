@@ -44,8 +44,9 @@ public class Config {
     final HashSet<Integer> sslPorts = new HashSet<>();
 
     public boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
-    boolean debug; // Is this debug environment
+    private boolean debug; // Is this debug environment
 
+    @SuppressWarnings("unused")
     public HashMap<String, HashMap<String, Route>> getRouteCache() {
         return routeCache;
     }
@@ -70,6 +71,7 @@ public class Config {
         return sslKeyStorePassword;
     }
 
+    @SuppressWarnings("unused")
     public ConfigurationSection getSection() {
         return section;
     }
@@ -82,12 +84,17 @@ public class Config {
         return routes;
     }
 
+    @SuppressWarnings("unused")
     public HashMap<String, UniporterHttpHandler> getHandlers() {
         return handlers;
     }
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     /**
@@ -271,6 +278,7 @@ public class Config {
      * @return the most suitable route
      * @throws IllegalHttpStateException if no route can be found
      */
+    @SuppressWarnings("unused")
     public Route findRoute(String path) throws IllegalHttpStateException {
         return findRoute(":minecraft", "", path);
     }
@@ -291,12 +299,13 @@ public class Config {
                 .computeIfAbsent(logicalPort, (key) -> new HashMap<>())
                 .values().stream()
                 // Find all routes sets can handle the given path
-                .filter(sets -> sets.stream().anyMatch(route ->
-                        path.equals(route.getPath()) || path.startsWith(route.getPath() + "/")))
+                .filter(sets -> sets.stream().anyMatch(route -> path.equals(route.getPath()) ||
+                        path.startsWith("/".equals(route.getPath()) ? "/" : route.getPath() + "/")))
                 // Combine to a large stream
                 .flatMap(Set::stream)
                 // Filters non related path routers
-                .filter(route -> path.equals(route.getPath()) || path.startsWith(route.getPath() + "/"))
+                .filter(route -> path.equals(route.getPath()) ||
+                        path.startsWith("/".equals(route.getPath()) ? "/" : route.getPath() + "/"))
                 // Filters non related host routers
                 // 0 size means it handles all hosts
                 .filter(route -> route.hosts.size() == 0
