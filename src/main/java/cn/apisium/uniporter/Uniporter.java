@@ -40,7 +40,6 @@ import java.util.*;
 @ApiVersion(ApiVersion.Target.v1_13)
 @Commands(@Command(name = "uniporter", permission = "uniporter.use", usage = "/uniporter"))
 @Permissions(@Permission(name = "uniporter.use"))
-@SoftDependency("ProtocolLib")
 public final class Uniporter extends JavaPlugin {
     private static final String PREFIX = ChatColor.YELLOW + "[Uniporter] ";
     private static Uniporter instance;
