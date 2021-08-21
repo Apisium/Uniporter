@@ -44,7 +44,7 @@ public class Config {
     final HashSet<Integer> sslPorts = new HashSet<>();
 
     public boolean keyStoreExist; // Is the key store exist, if its not, ssl will be disabled
-    boolean debug; // Is this debug environment
+    private boolean debug; // Is this debug environment
 
     public HashMap<String, HashMap<String, Route>> getRouteCache() {
         return routeCache;
@@ -88,6 +88,10 @@ public class Config {
 
     public boolean isDebug() {
         return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        this.debug = debug;
     }
 
     /**

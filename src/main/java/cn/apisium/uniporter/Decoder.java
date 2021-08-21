@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class Decoder extends ByteToMessageDecoder {
     @Override
-    protected void decode(ChannelHandlerContext context, ByteBuf buf, List<Object> list) throws Exception {
+    protected void decode(ChannelHandlerContext context, ByteBuf buf, List<Object> list) {
         buf.retain();
         buf.markReaderIndex();
         boolean handled = false;

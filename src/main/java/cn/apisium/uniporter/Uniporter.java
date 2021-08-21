@@ -8,22 +8,25 @@ import cn.apisium.uniporter.router.defaults.DefaultStaticHandler;
 import cn.apisium.uniporter.router.listener.RouterChannelCreator;
 import cn.apisium.uniporter.util.ReflectionFinder;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.PluginLoadOrder;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.annotation.command.Command;
+import org.bukkit.plugin.java.annotation.command.Commands;
+import org.bukkit.plugin.java.annotation.dependency.SoftDependency;
+import org.bukkit.plugin.java.annotation.permission.Permission;
+import org.bukkit.plugin.java.annotation.permission.Permissions;
 import org.bukkit.plugin.java.annotation.plugin.*;
 import org.bukkit.plugin.java.annotation.plugin.author.Author;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Uniporter plugin class, also contains some API methods.
@@ -36,7 +39,11 @@ import java.util.Set;
 @LoadOrder(PluginLoadOrder.STARTUP)
 @Website("https://apisium.cn")
 @ApiVersion(ApiVersion.Target.v1_13)
+@Commands(@Command(name = "uniporter", permission = "uniporter.use"))
+@Permissions(@Permission(name = "uniporter.use"))
+@SoftDependency("ProtocolLib")
 public final class Uniporter extends JavaPlugin {
+    private static final String PREFIX = ChatColor.YELLOW + "[Uniporter] ";
     private static Uniporter instance;
     private static Config config;
 
@@ -152,34 +159,44 @@ public final class Uniporter extends JavaPlugin {
         return getRouteConfig().isSSLPort(port);
     }
 
+    private static ChannelFuture findBoostrapChannelFuture() {
+        List<?> futures = ReflectionFinder.findChannelFutures();
+        assert futures != null;
+        return futures.stream()
+                .filter(f -> f instanceof ChannelFuture)
+                .map(f -> (ChannelFuture) f).findFirst().orElse(null);
+    }
+
     /**
      * Attach channel handler to Minecraft
      */
     private void attachChannelHandler() {
         try {
-            List<?> futures = ReflectionFinder.findChannelFutures();
-            assert futures != null;
-            futures.stream()
-                    .filter(f -> f instanceof ChannelFuture)
-                    .map(f -> (ChannelFuture) f).findFirst()
-                    .ifPresent(future -> future.channel().pipeline().addFirst(new ChannelInboundHandlerAdapter() {
-                        @Override
-                        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                            if (msg instanceof NioSocketChannel) {
-                                NioSocketChannel channel = (NioSocketChannel) msg;
-                                if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
-                                    channel.pipeline().addLast(Constants.DECODER_ID, new Decoder());
-                                }
-                                super.channelRead(ctx, channel);
-                            } else {
-                                super.channelRead(ctx, msg);
+            ChannelFuture future = findBoostrapChannelFuture();
+            if (future != null) {
+                future.channel().pipeline().addFirst(Constants.UNIPORTER_ID, new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                        if (msg instanceof NioSocketChannel) {
+                            NioSocketChannel channel = (NioSocketChannel) msg;
+                            if (!channel.pipeline().names().contains(Constants.DECODER_ID)) {
+                                channel.pipeline().addFirst(Constants.DECODER_ID, new Decoder());
                             }
+                            super.channelRead(ctx, channel);
+                        } else {
+                            super.channelRead(ctx, msg);
                         }
-                    }));
+                    }
+                });
+            }
         } catch (Throwable e) {
             e.printStackTrace();
             getLogger().info("Failed to attach channel.");
         }
+    }
+
+    private void reload() {
+        // TODO: reload
     }
 
     @Override
@@ -195,7 +212,10 @@ public final class Uniporter extends JavaPlugin {
         // Register default static handler
         registerHandler("static", new DefaultStaticHandler());
 
-        getLogger().info("Uniporter initialized");
+        PluginCommand command = getServer().getPluginCommand("uniporter");
+        assert command != null;
+        command.setTabCompleter(this);
+        command.setExecutor(this);
 
         if (this.getConfig().getBoolean("eula") && this.getConfig().getBoolean("order")) {
             boolean success = false;
@@ -228,12 +248,60 @@ public final class Uniporter extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ChannelFuture future = findBoostrapChannelFuture();
+        if (future != null) {
+            future.channel().pipeline().remove(Constants.UNIPORTER_ID);
+        }
         // Close all previous opened servers
         getRouteConfig().getAdditionalServers().values().forEach(server -> {
             server.getFuture().addListener(ChannelFutureListener.CLOSE);
             server.getFuture().syncUninterruptibly();
         });
+    }
 
-        getLogger().info("Uniporter disabled.");
+    private static String formatBoolean(boolean value) {
+        return (value ? ChatColor.GREEN : ChatColor.RED).toString() + value;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
+        if (args.length != 1) return false;
+        switch (args[0]) {
+            case "reload":
+                reload();
+                sender.sendMessage(PREFIX + ChatColor.GREEN + "Success!");
+                break;
+            case "debug": {
+                boolean value = !isDebug();
+                getRouteConfig().setDebug(value);
+                sender.sendMessage(PREFIX + ChatColor.GRAY + "Current is: " + formatBoolean(value));
+                break;
+            }
+            case "channels":
+                sender.sendMessage(PREFIX + ChatColor.GRAY + "Channels:");
+                List<?> futures = ReflectionFinder.findChannelFutures();
+                assert futures != null;
+                futures.stream()
+                        .filter(f -> f instanceof ChannelFuture)
+                        .map(f -> ((ChannelFuture) f).channel())
+                        .forEach(channel -> {
+                            sender.sendMessage(channel.id().asShortText() + ":");
+                            sender.sendMessage(ChatColor.GRAY + "  Active: " + formatBoolean(channel.isActive()));
+                            sender.sendMessage(ChatColor.GRAY + "  Open: " + formatBoolean(channel.isOpen()));
+                            sender.sendMessage(ChatColor.GRAY + "  Registered: " +
+                                    formatBoolean(channel.isRegistered()));
+                            sender.sendMessage(ChatColor.GRAY + "  Address: " + ChatColor.WHITE +
+                                    channel.localAddress().toString());
+                            sender.sendMessage(ChatColor.GRAY + "  Pipelines:");
+                            channel.pipeline().forEach(it -> sender.sendMessage("    " + it.getKey() + ": " +
+                                    ChatColor.GRAY + it.getValue().getClass().getName()));
+                        });
+        }
+        return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command, String alias, String[] args) {
+        return args.length == 1 ? Arrays.asList("reload", "debug", "channels") : Collections.emptyList();
     }
 }
