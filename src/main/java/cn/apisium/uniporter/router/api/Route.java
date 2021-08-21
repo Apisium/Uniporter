@@ -73,6 +73,7 @@ public class Route {
         return gzip;
     }
 
+    @SuppressWarnings("unused")
     public void setGzip(boolean gzip) {
         this.gzip = gzip;
     }
@@ -81,6 +82,7 @@ public class Route {
         return header;
     }
 
+    @SuppressWarnings("unused")
     public void setHeader(Map<String, String> header) {
         this.header = header;
     }
@@ -89,6 +91,7 @@ public class Route {
         return options;
     }
 
+    @SuppressWarnings("unused")
     public void setOptions(Map<String, Object> options) {
         this.options = options;
     }

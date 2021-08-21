@@ -1,3 +1,5 @@
+# Debug environment, default: false
+debug: false
 # Agree ACME eula
 eula: false
 # Do you want to do the order?

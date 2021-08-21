@@ -55,18 +55,20 @@ public class Authorizer extends SimpleChannelInboundHandler<FullHttpRequest> {
         return keyPair;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     public Authorizer(Uniporter plugin) throws IOException {
         this.plugin = plugin;
         logger = plugin.getLogger();
         logger.info("Start order certificate");
         authorized = plugin.getConfig().getBoolean("authorized", false);
         session = new Session(
-                (Uniporter.getRouteConfig().isDebug() ?
+                (Uniporter.isDebug() ?
                         "https://acme-staging-v02.api.letsencrypt.org/directory" :
                         "https://acme-v02.api.letsencrypt.org/directory"));
         database = new File(plugin.getDataFolder(), "keys");
         if (database.exists()) {
             String[] entries = database.list();
+            assert entries != null;
             for (String s : entries) {
                 File currentFile = new File(database.getPath(), s);
                 currentFile.delete();
@@ -94,7 +96,7 @@ public class Authorizer extends SimpleChannelInboundHandler<FullHttpRequest> {
             pipeline.addLast(new ChunkedWriteHandler());
             pipeline.addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
                 @Override
-                protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
+                protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) {
                     Authorizer.this.channelRead0(ctx, msg);
                 }
             });
@@ -109,6 +111,7 @@ public class Authorizer extends SimpleChannelInboundHandler<FullHttpRequest> {
         }).start();
     }
 
+    @SuppressWarnings("BusyWait")
     public void order() throws AcmeException, InterruptedException, IOException, KeyStoreException,
             CertificateException, NoSuchAlgorithmException {
         logger.info("Ordering certificate");
@@ -161,6 +164,7 @@ public class Authorizer extends SimpleChannelInboundHandler<FullHttpRequest> {
 
     CountDownLatch latch = new CountDownLatch(1);
 
+    @SuppressWarnings("BusyWait")
     protected void process(Authorization auth) throws AcmeException, InterruptedException {
         currentChallenge = auth.findChallenge(Http01Challenge.class);
         assert currentChallenge != null;
@@ -180,7 +184,7 @@ public class Authorizer extends SimpleChannelInboundHandler<FullHttpRequest> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext context, FullHttpRequest msg) throws Exception {
+    protected void channelRead0(ChannelHandlerContext context, FullHttpRequest msg) {
         try {
             if (!msg.uri().contains(".well-known/acme-challenge")) {
                 throw new IllegalStateException();
