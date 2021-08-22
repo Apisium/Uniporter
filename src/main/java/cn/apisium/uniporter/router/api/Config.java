@@ -5,6 +5,7 @@ import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import cn.apisium.uniporter.server.SimpleHttpServer;
 import cn.apisium.uniporter.server.SimpleHttpsServer;
 import cn.apisium.uniporter.server.SimpleServer;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -49,6 +50,7 @@ public class Config {
         return routeCache;
     }
 
+    @SuppressWarnings("unused")
     public HashMap<String, SimpleServer> getAdditionalServers() {
         return additionalServers;
     }
@@ -280,5 +282,14 @@ public class Config {
      */
     public boolean isSSLPort(int port) {
         return sslPorts.contains(port);
+    }
+
+    // Close all previous opened servers
+    public void stop() {
+        additionalServers.forEach((key, server) -> {
+            server.getFuture().addListener(ChannelFutureListener.CLOSE);
+            server.getFuture().syncUninterruptibly();
+            server.stop();
+        });
     }
 }

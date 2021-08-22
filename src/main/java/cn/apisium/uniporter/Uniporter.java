@@ -48,6 +48,7 @@ public final class Uniporter extends JavaPlugin {
     private static Uniporter instance;
     private static Config config;
     private static boolean debug; // Is this debug environment
+    private static boolean useNativeTransport;
 
     /**
      * @return Plugin's instance
@@ -68,6 +69,13 @@ public final class Uniporter extends JavaPlugin {
      */
     public static boolean isDebug() {
         return debug;
+    }
+
+    /**
+     * @return is in debug environment
+     */
+    public static boolean isUseNativeTransport() {
+        return useNativeTransport;
     }
 
     /**
@@ -229,8 +237,10 @@ public final class Uniporter extends JavaPlugin {
     }
 
     private void reload() {
+        config.stop();
         reloadConfig();
         debug = this.getConfig().getBoolean("debug", false);
+        useNativeTransport = this.getConfig().getBoolean("use-native-transport", true);
         config = new Config(new File(this.getDataFolder(), "route.yml"));
         pluginRoutes.forEach(it -> config.registerRoute(it.port, it.ssl, it.route));
     }
@@ -242,6 +252,7 @@ public final class Uniporter extends JavaPlugin {
         instance = this;
         config = new Config(new File(this.getDataFolder(), "route.yml"));
         debug = this.getConfig().getBoolean("debug", false);
+        useNativeTransport = this.getConfig().getBoolean("use-native-transport", true);
 
         getServer().getPluginManager().registerEvents(new RouterChannelCreator(), this);
 
@@ -291,11 +302,8 @@ public final class Uniporter extends JavaPlugin {
                 future.channel().pipeline().remove(Constants.UNIPORTER_ID);
             }
         });
-        // Close all previous opened servers
-        getRouteConfig().getAdditionalServers().values().forEach(server -> {
-            server.getFuture().addListener(ChannelFutureListener.CLOSE);
-            server.getFuture().syncUninterruptibly();
-        });
+
+        config.stop();
     }
 
     private static String formatBoolean(boolean value) {

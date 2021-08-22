@@ -1,12 +1,15 @@
 package cn.apisium.uniporter.server;
 
+import cn.apisium.uniporter.Uniporter;
 import cn.apisium.uniporter.util.LambdaChannelInitializer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.epoll.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.unix.DomainSocketAddress;
 
 import java.net.InetSocketAddress;
 
@@ -20,6 +23,8 @@ public class SimpleServer {
     final LambdaChannelInitializer initializer;
 
     ChannelFuture future;
+
+    private NioEventLoopGroup bossGroup, workGroup;
 
     /**
      * Create the server
@@ -39,15 +44,25 @@ public class SimpleServer {
      */
     public void start() throws Exception {
         ServerBootstrap bootstrap = new ServerBootstrap();
-        bootstrap.group(new NioEventLoopGroup())
-                .channel(NioServerSocketChannel.class)
+        bootstrap.group(bossGroup = new NioEventLoopGroup(), workGroup = new NioEventLoopGroup())
+                .channel(Epoll.isAvailable() && Uniporter.isUseNativeTransport()
+                        ? EpollServerSocketChannel.class : NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
-                    protected void initChannel(Channel ch) throws Exception {
+                    protected void initChannel(Channel ch) {
                         initializer.initialize(ch);
                     }
                 });
+        if (Epoll.isAvailable() && Uniporter.isUseNativeTransport()) {
+            bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED)
+                    .option(EpollChannelOption.TCP_QUICKACK, Boolean.TRUE);
+        }
         future = bootstrap.bind(new InetSocketAddress(port)).await();
+    }
+
+    public void stop() {
+        workGroup.shutdownGracefully();
+        bossGroup.shutdownGracefully();
     }
 
     public ChannelFuture getFuture() {
