@@ -9,7 +9,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.epoll.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.unix.DomainSocketAddress;
 
 import java.net.InetSocketAddress;
 
@@ -53,10 +52,6 @@ public class SimpleServer {
                         initializer.initialize(ch);
                     }
                 });
-        if (Epoll.isAvailable() && Uniporter.isUseNativeTransport()) {
-            bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED)
-                    .option(EpollChannelOption.TCP_QUICKACK, Boolean.TRUE);
-        }
         future = bootstrap.bind(new InetSocketAddress(port)).await();
     }
 
