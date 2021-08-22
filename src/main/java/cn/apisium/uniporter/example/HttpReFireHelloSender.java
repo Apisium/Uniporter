@@ -17,12 +17,13 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Baleine_2000
  */
+@SuppressWarnings("unused")
 public class HttpReFireHelloSender implements UniporterHttpHandler {
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
         context.channel().pipeline().addLast(new SimpleChannelInboundHandler<FullHttpRequest>() {
             @Override
-            protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
+            protected void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) {
                 String builder = "ReFired: Hello world from Uniporter!" +
                         "<br>" +
                         "<br>This is: " +

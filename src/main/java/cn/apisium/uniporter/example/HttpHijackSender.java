@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpRequest;
 
 import java.nio.charset.StandardCharsets;
 
+@SuppressWarnings("unused")
 public class HttpHijackSender implements UniporterHttpHandler {
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
@@ -26,7 +27,7 @@ public class HttpHijackSender implements UniporterHttpHandler {
         context.pipeline().addBefore(Constants.AGGREGATOR_HANDLER_ID, "Hijack",
                 new SimpleChannelInboundHandler<Object>() {
                     @Override
-                    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+                    protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
                         Uniporter.send(context, "text/plain", request.uri().getBytes(StandardCharsets.UTF_8));
                     }
                 });

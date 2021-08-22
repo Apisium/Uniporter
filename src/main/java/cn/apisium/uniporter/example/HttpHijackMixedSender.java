@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.HttpRequest;
 
 import java.nio.charset.StandardCharsets;
 
+@SuppressWarnings("unused")
 public class HttpHijackMixedSender implements UniporterHttpHandler {
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
@@ -28,7 +29,7 @@ public class HttpHijackMixedSender implements UniporterHttpHandler {
         context.pipeline().addBefore(Constants.AGGREGATOR_HANDLER_ID, "mixed",
                 new SimpleChannelInboundHandler<HttpObject>() {
                     @Override
-                    protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
+                    protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
                         System.out.println(msg);
                         ctx.fireChannelRead(msg);
                     }

@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
  *
  * @author Baleine_2000
  */
+@SuppressWarnings("unused")
 public class HttpHelloSender implements UniporterHttpHandler {
     @Override
     public void handle(String path, Route route, ChannelHandlerContext context, FullHttpRequest request) {
