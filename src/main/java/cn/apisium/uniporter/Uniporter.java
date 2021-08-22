@@ -98,7 +98,7 @@ public final class Uniporter extends JavaPlugin {
     @SuppressWarnings("unused")
     public static void registerRoute(int port, boolean ssl, Route route) {
         getRouteConfig().registerRoute(":" + port, ssl, route);
-        pluginRoutes.add(new RouteWithOptions(":" + port, true, route));
+        pluginRoutes.add(new RouteWithOptions(":" + port, ssl, route));
     }
 
     /**
@@ -133,9 +133,7 @@ public final class Uniporter extends JavaPlugin {
     public static void registerHandler(String id, UniporterHttpHandler handler, boolean isAutoRoute, boolean gzip) {
         handlers.put(id, handler);
         if (isAutoRoute) {
-            Route route = new Route("/" + id, id, gzip, Collections.emptyMap(), Collections.emptyMap());
-            registerRoute(route);
-            pluginRoutes.add(new RouteWithOptions(":minecraft", true, route));
+            registerRoute(new Route("/" + id, id, gzip, Collections.emptyMap(), Collections.emptyMap()));
         }
     }
 
