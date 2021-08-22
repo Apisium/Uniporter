@@ -43,9 +43,12 @@ import java.util.stream.Stream;
 @SoftDependency("ProtocolLib")
 public final class Uniporter extends JavaPlugin {
     private static final String PREFIX = ChatColor.YELLOW + "[Uniporter] ";
+    private static final HashMap<String, UniporterHttpHandler> handlers = new HashMap<>();
+    private static final ArrayList<RouteWithOptions> pluginRoutes = new ArrayList<>();
     private static Uniporter instance;
     private static Config config;
     private static boolean debug; // Is this debug environment
+    private static boolean useNativeTransport;
 
     /**
      * @return Plugin's instance
@@ -69,12 +72,20 @@ public final class Uniporter extends JavaPlugin {
     }
 
     /**
+     * @return is in debug environment
+     */
+    public static boolean isUseNativeTransport() {
+        return useNativeTransport;
+    }
+
+    /**
      * Register a route listen to minecraft port.
      *
      * @param route the route need to be registered
      */
     public static void registerRoute(Route route) {
-        getRouteConfig().registerRoute(route);
+        getRouteConfig().registerRoute(":minecraft", true, route);
+        pluginRoutes.add(new RouteWithOptions(":minecraft", true, route));
     }
 
     /**
@@ -87,6 +98,7 @@ public final class Uniporter extends JavaPlugin {
     @SuppressWarnings("unused")
     public static void registerRoute(int port, boolean ssl, Route route) {
         getRouteConfig().registerRoute(":" + port, ssl, route);
+        pluginRoutes.add(new RouteWithOptions(":" + port, ssl, route));
     }
 
     /**
@@ -107,11 +119,27 @@ public final class Uniporter extends JavaPlugin {
      * @param isAutoRoute will the handler register a route corresponding to its id immediately
      */
     public static void registerHandler(String id, UniporterHttpHandler handler, boolean isAutoRoute) {
-        getRouteConfig().registerHandler(id, handler);
+        registerHandler(id, handler, isAutoRoute, true);
+    }
+
+    /**
+     * Register handler for later use.
+     *
+     * @param id          the unique handler id, the very last handler registered with same id will be used
+     * @param handler     the handler who will process the http request
+     * @param isAutoRoute will the handler register a route corresponding to its id immediately
+     * @param gzip        whether gzip is enabled
+     */
+    public static void registerHandler(String id, UniporterHttpHandler handler, boolean isAutoRoute, boolean gzip) {
+        handlers.put(id, handler);
         if (isAutoRoute) {
-            registerRoute(new Route(String.format("/%s", id), id, true, new HashMap<>(),
-                    new HashMap<>()));
+            registerRoute(new Route("/" + id, id, gzip, Collections.emptyMap(), Collections.emptyMap()));
         }
+    }
+
+    @SuppressWarnings("unused")
+    public static Map<String, UniporterHttpHandler> getHandlers() {
+        return Collections.unmodifiableMap(handlers);
     }
 
     /**
@@ -121,7 +149,17 @@ public final class Uniporter extends JavaPlugin {
      */
     @SuppressWarnings("unused")
     public static void removeHandler(String id) {
-        getRouteConfig().removeHandler(id);
+        handlers.remove(id);
+    }
+
+    /**
+     * Find a possible handler represents by the given id
+     *
+     * @param id unique handler id
+     * @return possible handler
+     */
+    public static UniporterHttpHandler getHandler(String id) {
+        return handlers.get(id);
     }
 
     /**
@@ -197,9 +235,12 @@ public final class Uniporter extends JavaPlugin {
     }
 
     private void reload() {
+        config.stop();
         reloadConfig();
         debug = this.getConfig().getBoolean("debug", false);
+        useNativeTransport = this.getConfig().getBoolean("use-native-transport", true);
         config = new Config(new File(this.getDataFolder(), "route.yml"));
+        pluginRoutes.forEach(it -> config.registerRoute(it.port, it.ssl, it.route));
     }
 
     @Override
@@ -209,6 +250,7 @@ public final class Uniporter extends JavaPlugin {
         instance = this;
         config = new Config(new File(this.getDataFolder(), "route.yml"));
         debug = this.getConfig().getBoolean("debug", false);
+        useNativeTransport = this.getConfig().getBoolean("use-native-transport", true);
 
         getServer().getPluginManager().registerEvents(new RouterChannelCreator(), this);
 
@@ -258,11 +300,8 @@ public final class Uniporter extends JavaPlugin {
                 future.channel().pipeline().remove(Constants.UNIPORTER_ID);
             }
         });
-        // Close all previous opened servers
-        getRouteConfig().getAdditionalServers().values().forEach(server -> {
-            server.getFuture().addListener(ChannelFutureListener.CLOSE);
-            server.getFuture().syncUninterruptibly();
-        });
+
+        config.stop();
     }
 
     private static String formatBoolean(boolean value) {
@@ -273,9 +312,10 @@ public final class Uniporter extends JavaPlugin {
     public boolean onCommand(CommandSender sender, org.bukkit.command.Command command, String label, String[] args) {
         if (args.length == 0) {
             sender.sendMessage(PREFIX + ChatColor.GRAY + "Version: " + ChatColor.WHITE + getDescription().getVersion());
-            sender.sendMessage(ChatColor.AQUA + "/uniporter reload");
-            sender.sendMessage(ChatColor.AQUA + "/uniporter debug");
             sender.sendMessage(ChatColor.AQUA + "/uniporter channels");
+            sender.sendMessage(ChatColor.AQUA + "/uniporter debug");
+            sender.sendMessage(ChatColor.AQUA + "/uniporter handlers");
+            sender.sendMessage(ChatColor.AQUA + "/uniporter reload");
             return true;
         }
         if (args.length != 1) return false;
@@ -289,7 +329,7 @@ public final class Uniporter extends JavaPlugin {
                 return true;
             case "handlers":
                 sender.sendMessage(PREFIX + ChatColor.GRAY + "Handlers:");
-                getRouteConfig().getHandlers().forEach((k, v) -> {
+                handlers.forEach((k, v) -> {
                     sender.sendMessage("  " + k + ": " + ChatColor.GRAY + v.getClass().getName());
                     sender.sendMessage(ChatColor.GRAY + "    Need re-fire: " + formatBoolean(v.needReFire()));
                     sender.sendMessage(ChatColor.GRAY + "    Hijack Aggregator: " +
@@ -321,5 +361,16 @@ public final class Uniporter extends JavaPlugin {
     public List<String> onTabComplete(CommandSender sender, org.bukkit.command.Command command,
                                       String alias, String[] args) {
         return args.length == 1 ? Arrays.asList("channels", "debug", "handlers", "reload") : Collections.emptyList();
+    }
+
+    private static final class RouteWithOptions {
+        public final String port;
+        public final boolean ssl;
+        public final Route route;
+        public RouteWithOptions(String port, boolean ssl, Route route) {
+            this.port = port;
+            this.ssl = ssl;
+            this.route = route;
+        }
     }
 }

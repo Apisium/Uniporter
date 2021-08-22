@@ -1,5 +1,7 @@
 # Debug environment, default: false
 debug: false
+# Use native transport, default: true
+use-native-transport: true
 # Agree ACME eula
 eula: false
 # Do you want to do the order?

@@ -5,6 +5,7 @@ import cn.apisium.uniporter.router.exception.IllegalHttpStateException;
 import cn.apisium.uniporter.server.SimpleHttpServer;
 import cn.apisium.uniporter.server.SimpleHttpsServer;
 import cn.apisium.uniporter.server.SimpleServer;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -38,7 +39,6 @@ public class Config {
     final HashMap<String, SimpleServer> additionalServers = new HashMap<>();
     // All servers with ports other than :minecraft, key is its port
 
-    final HashMap<String, UniporterHttpHandler> handlers = new HashMap<>(); // All registered http handlers
     final HashMap<String, Set<Integer>> extraPorts = new HashMap<>();
     final HashMap<String, Set<Route>> handlerToRoute = new HashMap<>();
     final HashSet<Integer> sslPorts = new HashSet<>();
@@ -50,6 +50,7 @@ public class Config {
         return routeCache;
     }
 
+    @SuppressWarnings("unused")
     public HashMap<String, SimpleServer> getAdditionalServers() {
         return additionalServers;
     }
@@ -81,11 +82,6 @@ public class Config {
 
     public HashMap<String, HashMap<String, HashSet<Route>>> getRoutes() {
         return routes;
-    }
-
-    @SuppressWarnings("unused")
-    public HashMap<String, UniporterHttpHandler> getHandlers() {
-        return handlers;
     }
 
     /**
@@ -178,36 +174,6 @@ public class Config {
     }
 
     /**
-     * Register handler for later use.
-     *
-     * @param id      the unique handler id, the very last handler registered with same id will be used
-     * @param handler the handler who will process the http request
-     */
-    public void registerHandler(String id, UniporterHttpHandler handler) {
-        handlers.put(id, handler);
-    }
-
-    /**
-     * Remove a registered handler.
-     *
-     * @param id the unique handler id
-     */
-    public void removeHandler(String id) {
-        handlers.remove(id);
-    }
-
-
-    /**
-     * Register a route, with default ssl enable and listen to minecraft port.
-     *
-     * @param route the route need to be registered
-     */
-    public void registerRoute(Route route) {
-        registerRoute(":minecraft", true, route);
-    }
-
-
-    /**
      * Register a route, with given port to listen to, and will ssl be used
      *
      * @param logicalPort in format of <code>":" + port</code>
@@ -248,16 +214,6 @@ public class Config {
             ports.add(Bukkit.getPort());
         }
         routes.add(route);
-    }
-
-    /**
-     * Find a possible handler represents by the given id
-     *
-     * @param id unique handler id
-     * @return possible handler
-     */
-    public Optional<UniporterHttpHandler> getHandler(String id) {
-        return Optional.ofNullable(handlers.get(id));
     }
 
     /**
@@ -304,7 +260,7 @@ public class Config {
                         // Find match with port numbers as a fallback
                         || route.hosts.stream().anyMatch(pattern -> pattern.matcher(host).find()))
                 // Find the most precise route by path length
-                .max(Comparator.comparingInt((route) -> route.path.length()))
+                .max(Comparator.comparingInt(route -> route.path.length()))
                 // Throws error if nothing is found
                 .orElseThrow(() -> new IllegalHttpStateException(HttpResponseStatus.NOT_FOUND)));
     }
@@ -326,5 +282,14 @@ public class Config {
      */
     public boolean isSSLPort(int port) {
         return sslPorts.contains(port);
+    }
+
+    // Close all previous opened servers
+    public void stop() {
+        additionalServers.forEach((key, server) -> {
+            server.getFuture().addListener(ChannelFutureListener.CLOSE);
+            server.getFuture().syncUninterruptibly();
+            server.stop();
+        });
     }
 }

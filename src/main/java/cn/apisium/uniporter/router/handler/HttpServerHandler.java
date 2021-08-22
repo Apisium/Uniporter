@@ -38,11 +38,10 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
         try {
             // Find the route corresponding to this request and calls the handler registered
             Route route = this.getRoute(context, request.headers(), path);
-            UniporterHttpHandler handler =
-                    Uniporter.getRouteConfig()
-                            .getHandler(route.getHandler())
-                            .orElseThrow(IllegalHttpStateException::new);
-
+            UniporterHttpHandler handler = Uniporter.getHandler(route.getHandler());
+            if (handler == null) {
+                throw new IllegalHttpStateException("No such route:<br>" + path, HttpResponseStatus.NOT_FOUND);
+            }
             // Check if the response need to be gzipped or not
             if (!route.isGzip() && context.channel().pipeline().names().contains(Constants.GZIP_HANDLER_ID)) {
                 context.channel().pipeline().remove(Constants.GZIP_HANDLER_ID);
@@ -73,21 +72,10 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<FullHttpReque
             if (Uniporter.isDebug()) {
                 exception.printStackTrace();
             }
-            sendNoRouter(path, context);
+            exception.send(context);
         } catch (Throwable e) {
             // This is an unexpected error, should not happened
             IllegalHttpStateException.send(context, e);
         }
-    }
-
-    /**
-     * Send no router exception via {@link IllegalHttpStateException}.
-     *
-     * @param path    current accessing path
-     * @param context current request context
-     */
-    private static void sendNoRouter(String path, ChannelHandlerContext context) {
-        IllegalHttpStateException.send(context, HttpResponseStatus.NOT_FOUND, String.format("No such route:<br>%s",
-                path));
     }
 }

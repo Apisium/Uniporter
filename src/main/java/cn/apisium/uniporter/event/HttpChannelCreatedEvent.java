@@ -13,6 +13,7 @@ import org.bukkit.event.HandlerList;
 public class HttpChannelCreatedEvent extends ChannelCreatedEvent {
     private static final HandlerList handlerList = new HandlerList();
 
+    @SuppressWarnings("unused")
     public static HandlerList getHandlerList() {
         return handlerList;
     }
