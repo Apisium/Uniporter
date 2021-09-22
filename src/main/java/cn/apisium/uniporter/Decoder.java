@@ -79,7 +79,11 @@ public class Decoder extends ByteToMessageDecoder {
             names.addAll(original);
             // Keep the tail handler
             names.remove(Constants.DEFAULT_TAIL_ID);
-            names.forEach(context.channel().pipeline()::remove);
+            try {
+                names.forEach(context.channel().pipeline()::remove);
+            } catch (Throwable e) {
+                // Ignored for known possible throwable might occur here.
+            }
         } catch (Throwable e) {
             e.printStackTrace();
         }
