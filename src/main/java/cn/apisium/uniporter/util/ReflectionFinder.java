@@ -6,7 +6,9 @@ import org.bukkit.Bukkit;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -60,8 +62,21 @@ public class ReflectionFinder {
         try {
             assert server != null;
             return getServerConnectionMethodFromClass(Objects.requireNonNull(getMinecraftServerClass())).invoke(server);
-        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+        } catch (IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            try {
+                Class<?> serverClass = getMinecraftServerClass();
+                assert serverClass != null;
+                Class<?> connectionClass = Class.forName("net.minecraft.server.network.ServerConnection");
+                Method getConnection = Arrays.stream(serverClass.getDeclaredMethods())
+                        .filter(method -> method.getReturnType().equals(connectionClass))
+                        .findAny().orElseThrow(() -> new NoSuchElementException("Can not find connections"));
+                return getConnection.invoke(server);
+            } catch (Throwable f) {
+                e.printStackTrace();
+                f.printStackTrace();
+            }
         }
         return null;
     }
