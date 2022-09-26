@@ -2,6 +2,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id 'java'
     id 'idea'
+    id 'maven-publish'
 }
 
 group = 'cn.apisium'
@@ -81,3 +82,10 @@ artifacts {
     shadowJar
 }
 build.dependsOn(shadowJar)
+publishing {
+    publications {
+        shadow(MavenPublication) {
+            publication -> project.shadow.component(publication)
+        }
+    }
+}
